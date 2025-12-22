@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/navigation';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const sendOtp = async () => {
+    const supabase = getSupabaseBrowserClient();
     setLoading(true);
     setError(null);
     try {
@@ -33,6 +34,7 @@ export default function LoginPage() {
   };
 
   const verifyOtp = async () => {
+    const supabase = getSupabaseBrowserClient();
     setLoading(true);
     setError(null);
     try {
