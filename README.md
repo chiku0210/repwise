@@ -1,4 +1,3 @@
-
 # Repwise 🏋️‍♂️
 
 Every rep counts.  
@@ -33,9 +32,9 @@ Repwise is a focused gym-coach PWA for people who care about **progress, not hyp
 
 Repwise treats training like a system:
 
-1. **Record** what you do  
-2. **Review** what changes  
-3. **Adjust** with intent  
+1. **Record** what you do
+2. **Review** what changes
+3. **Adjust** with intent
 
 No motivational fluff, no influencer theatrics—just calm, clear feedback so every session moves you closer to your goals.
 
@@ -199,10 +198,10 @@ Open `http://localhost:3000` in your browser (mobile viewport recommended).
 
 ## Environment Variables
 
-| Variable                         | Description                                    |
-|----------------------------------|------------------------------------------------|
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                           |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon public key (client-side access)  |
+| Variable                        | Description                                   |
+| ------------------------------- | --------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                          |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon public key (client-side access) |
 
 Secrets are not committed; `.env.local` is git-ignored.
 

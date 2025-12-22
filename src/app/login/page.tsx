@@ -1,20 +1,20 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [phase, setPhase] = useState<'email' | 'otp'>('email')
-  const [otp, setOtp] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const [email, setEmail] = useState('');
+  const [phase, setPhase] = useState<'email' | 'otp'>('email');
+  const [otp, setOtp] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const sendOtp = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -22,40 +22,40 @@ export default function LoginPage() {
           shouldCreateUser: true,
           emailRedirectTo: 'http://localhost:3000', // update to prod later
         },
-      })
-      if (error) throw error
-      setPhase('otp')
+      });
+      if (error) throw error;
+      setPhase('otp');
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP')
+      setError(err.message || 'Failed to send OTP');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const verifyOtp = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'email',
-      })
-      if (error) throw error
+      });
+      if (error) throw error;
       if (data.session) {
-        router.push('/') // go to home after login
+        router.push('/'); // go to home after login
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to verify OTP')
+      setError(err.message || 'Failed to verify OTP');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-semibold text-center">Sign in</h1>
+        <h1 className="text-center text-2xl font-semibold">Sign in</h1>
 
         {phase === 'email' ? (
           <>
@@ -64,12 +64,12 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full border rounded-md px-3 py-2"
+              className="w-full rounded-md border px-3 py-2"
             />
             <button
               onClick={sendOtp}
               disabled={loading || !email}
-              className="w-full h-11 rounded-md bg-blue-600 text-white disabled:opacity-60"
+              className="h-11 w-full rounded-md bg-blue-600 text-white disabled:opacity-60"
             >
               {loading ? 'Sending OTP…' : 'Send OTP'}
             </button>
@@ -84,22 +84,20 @@ export default function LoginPage() {
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               placeholder="6-digit code"
-              className="w-full border rounded-md px-3 py-2 tracking-[0.3em]"
+              className="w-full rounded-md border px-3 py-2 tracking-[0.3em]"
             />
             <button
               onClick={verifyOtp}
               disabled={loading || otp.length === 0}
-              className="w-full h-11 rounded-md bg-blue-600 text-white disabled:opacity-60"
+              className="h-11 w-full rounded-md bg-blue-600 text-white disabled:opacity-60"
             >
               {loading ? 'Verifying…' : 'Verify & Sign in'}
             </button>
           </>
         )}
 
-        {error && (
-          <p className="text-sm text-red-500 text-center">{error}</p>
-        )}
+        {error && <p className="text-center text-sm text-red-500">{error}</p>}
       </div>
     </main>
-  )
+  );
 }

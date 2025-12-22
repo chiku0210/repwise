@@ -1,4 +1,4 @@
-const isProd = process.env.NODE_ENV === 'production'
+const isProd = process.env.NODE_ENV === 'production';
 
 const withPWA = require('next-pwa')({
   dest: 'public',
@@ -18,11 +18,11 @@ const withPWA = require('next-pwa')({
       },
     },
   ],
-})
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // remove experimental.ppr, keep this empty for now
-}
+};
 
-module.exports = withPWA(nextConfig)
+module.exports = withPWA(nextConfig);
