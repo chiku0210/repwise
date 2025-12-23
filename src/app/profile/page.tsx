@@ -35,7 +35,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label className="text-xs text-gray-400">User ID</label>
-                <p className="break-all text-xs text-gray-500">{user?.id || 'Loading...'}</p>
+                <p className="text-xs break-all text-gray-500">{user?.id || 'Loading...'}</p>
               </div>
               <div>
                 <label className="text-xs text-gray-400">Member since</label>

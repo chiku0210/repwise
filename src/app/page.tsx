@@ -14,7 +14,7 @@ export default function Home() {
         <div className="mx-auto max-w-md space-y-6 p-6">
           <div className="space-y-4 text-center">
             <h1 className="text-3xl font-bold tracking-tight">Repwise</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Every rep counts! <br />
               Log your training and build strength with intent.
             </p>

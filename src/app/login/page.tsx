@@ -108,10 +108,7 @@ export default function LoginPage() {
               <h2 className="mb-6 text-xl font-semibold text-white">Sign In</h2>
 
               <div className="mb-4">
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-gray-300"
-                >
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-300">
                   Email
                 </label>
                 <input
@@ -122,7 +119,7 @@ export default function LoginPage() {
                   placeholder="you@example.com"
                   required
                   disabled={loading}
-                  className="w-full rounded-md border border-gray-600 bg-[#0a1628] px-4 py-3 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full rounded-md border border-gray-600 bg-[#0a1628] px-4 py-3 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
                 />
               </div>
 
@@ -141,7 +138,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Sending...' : 'Send OTP'}
               </button>
@@ -166,7 +163,7 @@ export default function LoginPage() {
                   required
                   disabled={loading}
                   maxLength={6}
-                  className="w-full rounded-md border border-gray-600 bg-[#0a1628] px-4 py-3 text-center text-2xl tracking-widest text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full rounded-md border border-gray-600 bg-[#0a1628] px-4 py-3 text-center text-2xl tracking-widest text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
                 />
               </div>
 
@@ -185,7 +182,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mb-3 w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mb-3 w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Verifying...' : 'Verify & Sign In'}
               </button>
