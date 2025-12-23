@@ -1,12 +1,12 @@
-'use client'
+'use client';
 
-import { BottomNav } from '@/components/ui/bottom-nav'
-import { Button } from '@/components/ui/button'
-import { AuthGate } from '@/components/AuthGate'
-import { useAuth } from '@/hooks/useAuth'
+import { BottomNav } from '@/components/ui/bottom-nav';
+import { Button } from '@/components/ui/button';
+import { AuthGate } from '@/components/AuthGate';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Home() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
     <AuthGate>
@@ -18,22 +18,14 @@ export default function Home() {
               Every rep counts! <br />
               Log your training and build strength with intent.
             </p>
-            {user && (
-              <p className="text-xs text-gray-400">
-                Welcome, {user.email}
-              </p>
-            )}
+            {user && <p className="text-xs text-gray-400">Welcome, {user.email}</p>}
           </div>
 
           <div className="space-y-4">
             <Button size="lg" className="h-14 w-full text-lg">
               Start Workout
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-14 w-full text-lg"
-            >
+            <Button variant="outline" size="lg" className="h-14 w-full text-lg">
               Quick Log
             </Button>
           </div>
@@ -42,5 +34,5 @@ export default function Home() {
         <BottomNav />
       </main>
     </AuthGate>
-  )
+  );
 }

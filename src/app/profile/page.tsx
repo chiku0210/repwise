@@ -1,19 +1,19 @@
-'use client'
+'use client';
 
-import { BottomNav } from '@/components/ui/bottom-nav'
-import { Button } from '@/components/ui/button'
-import { AuthGate } from '@/components/AuthGate'
-import { useAuth } from '@/hooks/useAuth'
-import { useRouter } from 'next/navigation'
+import { BottomNav } from '@/components/ui/bottom-nav';
+import { Button } from '@/components/ui/button';
+import { AuthGate } from '@/components/AuthGate';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-  const { user, signOut, loading } = useAuth()
-  const router = useRouter()
+  const { user, signOut, loading } = useAuth();
+  const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push('/login')
-  }
+    await signOut();
+    router.push('/login');
+  };
 
   return (
     <AuthGate>
@@ -22,16 +22,12 @@ export default function ProfilePage() {
           {/* Header */}
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-white">Profile</h1>
-            <p className="text-sm text-gray-400">
-              Manage your account and preferences
-            </p>
+            <p className="text-sm text-gray-400">Manage your account and preferences</p>
           </div>
 
           {/* User Info Card */}
           <div className="rounded-lg bg-[#0f1e33] p-6 shadow-lg">
-            <h2 className="mb-4 text-lg font-semibold text-white">
-              Account Info
-            </h2>
+            <h2 className="mb-4 text-lg font-semibold text-white">Account Info</h2>
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-400">Email</label>
@@ -39,9 +35,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label className="text-xs text-gray-400">User ID</label>
-                <p className="break-all text-xs text-gray-500">
-                  {user?.id || 'Loading...'}
-                </p>
+                <p className="break-all text-xs text-gray-500">{user?.id || 'Loading...'}</p>
               </div>
               <div>
                 <label className="text-xs text-gray-400">Member since</label>
@@ -60,12 +54,8 @@ export default function ProfilePage() {
 
           {/* Settings placeholder */}
           <div className="rounded-lg bg-[#0f1e33] p-6 shadow-lg">
-            <h2 className="mb-4 text-lg font-semibold text-white">
-              Settings
-            </h2>
-            <p className="text-sm text-gray-400">
-              App settings coming soon...
-            </p>
+            <h2 className="mb-4 text-lg font-semibold text-white">Settings</h2>
+            <p className="text-sm text-gray-400">App settings coming soon...</p>
           </div>
 
           {/* Sign Out Button */}
@@ -82,5 +72,5 @@ export default function ProfilePage() {
         <BottomNav />
       </main>
     </AuthGate>
-  )
+  );
 }

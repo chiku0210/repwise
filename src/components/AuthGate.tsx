@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AuthGateProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function AuthGate({ children }: AuthGateProps) {
-  const { isAuthenticated, loading } = useAuth()
-  const router = useRouter()
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push('/login')
+      router.push('/login');
     }
-  }, [isAuthenticated, loading, router])
+  }, [isAuthenticated, loading, router]);
 
   if (loading) {
     return (
@@ -26,12 +26,12 @@ export function AuthGate({ children }: AuthGateProps) {
           <p className="text-gray-400">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!isAuthenticated) {
-    return null
+    return null;
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }

@@ -1,92 +1,92 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { getSupabaseBrowserClient } from '@/lib/supabase'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('')
-  const [otp, setOtp] = useState('')
-  const [step, setStep] = useState<'email' | 'otp'>('email')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setMessage(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+    setLoading(true);
 
     try {
-      const supabase = getSupabaseBrowserClient()
+      const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: undefined,
         },
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setMessage('Check your email for the OTP code')
-      setStep('otp')
+      setMessage('Check your email for the 6-digit OTP code');
+      setStep('otp');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send OTP')
+      setError(err instanceof Error ? err.message : 'Failed to send OTP');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     try {
-      const supabase = getSupabaseBrowserClient()
+      const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
         type: 'email',
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
-      router.push('/')
+      router.push('/');
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Invalid or expired OTP code',
-      )
+      setError(err instanceof Error ? err.message : 'Invalid or expired OTP code');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleResendOtp = async () => {
-    setError(null)
-    setMessage(null)
-    setLoading(true)
+    setError(null);
+    setMessage(null);
+    setLoading(true);
 
     try {
-      const supabase = getSupabaseBrowserClient()
+      const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: undefined,
         },
-      })
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setMessage('New OTP sent to your email')
+      setMessage('New OTP sent to your email');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resend OTP')
+      setError(err instanceof Error ? err.message : 'Failed to resend OTP');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a1628] px-4">
@@ -105,9 +105,7 @@ export default function LoginPage() {
         <div className="rounded-lg bg-[#0f1e33] p-6 shadow-xl">
           {step === 'email' ? (
             <form onSubmit={handleSendOtp}>
-              <h2 className="mb-6 text-xl font-semibold text-white">
-                Sign In
-              </h2>
+              <h2 className="mb-6 text-xl font-semibold text-white">Sign In</h2>
 
               <div className="mb-4">
                 <label
@@ -129,13 +127,13 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="mb-4 rounded-md bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-300">
+                <div className="mb-4 rounded-md border border-red-800 bg-red-900/30 px-4 py-3 text-sm text-red-300">
                   {error}
                 </div>
               )}
 
               {message && (
-                <div className="mb-4 rounded-md bg-blue-900/30 border border-blue-800 px-4 py-3 text-sm text-blue-300">
+                <div className="mb-4 rounded-md border border-blue-800 bg-blue-900/30 px-4 py-3 text-sm text-blue-300">
                   {message}
                 </div>
               )}
@@ -143,25 +141,20 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Sending...' : 'Send OTP'}
               </button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp}>
-              <h2 className="mb-2 text-xl font-semibold text-white">
-                Verify OTP
-              </h2>
+              <h2 className="mb-2 text-xl font-semibold text-white">Verify OTP</h2>
               <p className="mb-6 text-sm text-gray-400">
                 Enter the code sent to <strong>{email}</strong>
               </p>
 
               <div className="mb-4">
-                <label
-                  htmlFor="otp"
-                  className="mb-2 block text-sm font-medium text-gray-300"
-                >
+                <label htmlFor="otp" className="mb-2 block text-sm font-medium text-gray-300">
                   OTP Code
                 </label>
                 <input
@@ -178,13 +171,13 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="mb-4 rounded-md bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-300">
+                <div className="mb-4 rounded-md border border-red-800 bg-red-900/30 px-4 py-3 text-sm text-red-300">
                   {error}
                 </div>
               )}
 
               {message && (
-                <div className="mb-4 rounded-md bg-blue-900/30 border border-blue-800 px-4 py-3 text-sm text-blue-300">
+                <div className="mb-4 rounded-md border border-blue-800 bg-blue-900/30 px-4 py-3 text-sm text-blue-300">
                   {message}
                 </div>
               )}
@@ -192,7 +185,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                className="mb-3 w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Verifying...' : 'Verify & Sign In'}
               </button>
@@ -201,10 +194,10 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setStep('email')
-                    setOtp('')
-                    setError(null)
-                    setMessage(null)
+                    setStep('email');
+                    setOtp('');
+                    setError(null);
+                    setMessage(null);
                   }}
                   disabled={loading}
                   className="text-gray-400 hover:text-white disabled:opacity-50"
@@ -226,11 +219,11 @@ export default function LoginPage() {
 
         {/* Footer note */}
         <p className="mt-6 text-center text-xs text-gray-500">
-          We'll send you a one-time code to sign in.
+          We'll send you a 6-digit code to sign in.
           <br />
           No passwords needed.
         </p>
       </div>
     </div>
-  )
+  );
 }
