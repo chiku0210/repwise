@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Home, Dumbbell, BookOpen, User } from 'lucide-react';
 
 const items = [
-  { href: '/', label: 'Today', icon: Home },
+  { href: '/dashboard', label: 'Today', icon: Home },
   { href: '/log', label: 'Log', icon: Dumbbell },
   { href: '/learn', label: 'Learn', icon: BookOpen },
   { href: '/profile', label: 'Profile', icon: User },

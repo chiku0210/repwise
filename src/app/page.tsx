@@ -1,6 +1,21 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // If user is logged in, redirect to dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
   return (
     <div className="flex min-h-screen flex-col bg-[#0a1628]">
       {/* Main Content */}
@@ -49,9 +64,7 @@ export default function LandingPage() {
       {/* Footer with Privacy Policy */}
       <footer className="border-t border-gray-800 bg-[#0f1e33] px-4 py-6">
         <div className="mx-auto max-w-6xl text-center">
-          <p className="text-sm text-gray-400">
-            © 2025 Repwise. Every rep counts.
-          </p>
+          <p className="text-sm text-gray-400">© 2025 Repwise. Every rep counts.</p>
           <div className="mt-2 flex justify-center gap-4 text-xs text-gray-500">
             <Link href="/privacy" className="hover:text-blue-400">
               Privacy Policy
