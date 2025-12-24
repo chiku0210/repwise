@@ -1,58 +1,81 @@
 'use client';
 
-import { BottomNav } from '@/components/ui/bottom-nav';
-import { Button } from '@/components/ui/button';
-import { AuthGate } from '@/components/AuthGate';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export default function Home() {
-  const { user } = useAuth();
+export default function LandingPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // If user is logged in, redirect to dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
 
   return (
-    <AuthGate>
-      <div className="flex min-h-screen flex-col">
-        <main className="flex-1">
-          <div className="mx-auto max-w-md space-y-6 p-6">
-            <div className="space-y-4 text-center">
-              <h1 className="text-3xl font-bold tracking-tight">Repwise</h1>
-              <p className="text-muted-foreground text-sm">
-                Every rep counts! <br />
-                Log your training and build strength with intent.
+    <div className="flex min-h-screen flex-col bg-[#0a1628]">
+      {/* Main Content */}
+      <main className="flex-1 px-4 py-12">
+        <div className="mx-auto max-w-2xl text-center">
+          {/* Logo/Title */}
+          <h1 className="mb-4 text-5xl font-bold text-white">Repwise</h1>
+          <p className="mb-8 text-xl text-gray-300">
+            Every rep counts!
+            <br />
+            Log your training and build strength with intent.
+          </p>
+
+          {/* Features */}
+          <div className="mb-12 grid gap-6 text-left md:grid-cols-3">
+            <div className="rounded-lg border border-gray-700 bg-[#0f1e33] p-6">
+              <h3 className="mb-2 text-lg font-semibold text-white">Track Workouts</h3>
+              <p className="text-sm text-gray-400">
+                Log every exercise, set, and rep with ease. Build your training history.
               </p>
-              {user && <p className="text-xs text-gray-400">Welcome, {user.email}</p>}
             </div>
-
-            <div className="space-y-4">
-              <Button size="lg" className="h-14 w-full text-lg">
-                Start Workout
-              </Button>
-              <Button variant="outline" size="lg" className="h-14 w-full text-lg">
-                Quick Log
-              </Button>
+            <div className="rounded-lg border border-gray-700 bg-[#0f1e33] p-6">
+              <h3 className="mb-2 text-lg font-semibold text-white">Monitor Progress</h3>
+              <p className="text-sm text-gray-400">
+                Visualize your gains over time. See your strength improvements.
+              </p>
             </div>
-          </div>
-        </main>
-
-        {/* Footer with Privacy Policy link - positioned above BottomNav */}
-        <footer className="border-t border-gray-800 bg-[#0f1e33] px-4 py-3 pb-24">
-          <div className="mx-auto max-w-md text-center">
-            <p className="text-xs text-gray-400">
-              © 2025 Repwise
-            </p>
-            <div className="mt-1 flex justify-center gap-3 text-xs text-gray-500">
-              <a href="/privacy" className="hover:text-blue-400">
-                Privacy Policy
-              </a>
-              <span>•</span>
-              <a href="mailto:chiku0210@gmail.com" className="hover:text-blue-400">
-                Contact
-              </a>
+            <div className="rounded-lg border border-gray-700 bg-[#0f1e33] p-6">
+              <h3 className="mb-2 text-lg font-semibold text-white">Learn & Grow</h3>
+              <p className="text-sm text-gray-400">
+                Access exercise guides and form tips. Train smart, not just hard.
+              </p>
             </div>
           </div>
-        </footer>
 
-        <BottomNav />
-      </div>
-    </AuthGate>
+          {/* CTA Button */}
+          <Link
+            href="/login"
+            className="inline-block rounded-lg bg-blue-600 px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-blue-700"
+          >
+            Get Started - Sign In with Google
+          </Link>
+        </div>
+      </main>
+
+      {/* Footer with Privacy Policy */}
+      <footer className="border-t border-gray-800 bg-[#0f1e33] px-4 py-6">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="text-sm text-gray-400">© 2025 Repwise. Every rep counts.</p>
+          <div className="mt-2 flex justify-center gap-4 text-xs text-gray-500">
+            <Link href="/privacy" className="hover:text-blue-400">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <a href="mailto:chiku0210@gmail.com" className="hover:text-blue-400">
+              Contact
+            </a>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
