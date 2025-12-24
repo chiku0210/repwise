@@ -279,7 +279,7 @@ export default function LoginPage() {
         {/* Footer note */}
         <p className="mt-6 text-center text-xs text-gray-500">
           {step === 'email'
-            ? 'Sign in with Google or we'll send you a 6-digit code.'
+            ? "Sign in with Google or we'll send you a 6-digit code."
             : 'Enter the 6-digit code sent to your email.'}
           <br />
           No passwords needed.
