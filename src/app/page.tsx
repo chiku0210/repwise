@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <AuthGate>
       <div className="flex min-h-screen flex-col">
-        <main className="flex-1 pb-20">
+        <main className="flex-1">
           <div className="mx-auto max-w-md space-y-6 p-6">
             <div className="space-y-4 text-center">
               <h1 className="text-3xl font-bold tracking-tight">Repwise</h1>
@@ -31,17 +31,15 @@ export default function Home() {
               </Button>
             </div>
           </div>
-
-          <BottomNav />
         </main>
 
-        {/* Footer with Privacy Policy link (required for Google OAuth verification) */}
-        <footer className="border-t border-gray-800 bg-[#0f1e33] px-4 py-4">
+        {/* Footer with Privacy Policy link - positioned above BottomNav */}
+        <footer className="border-t border-gray-800 bg-[#0f1e33] px-4 py-3 pb-24">
           <div className="mx-auto max-w-md text-center">
             <p className="text-xs text-gray-400">
-              © 2025 Repwise. Every rep counts.
+              © 2025 Repwise
             </p>
-            <div className="mt-2 flex justify-center gap-3 text-xs text-gray-500">
+            <div className="mt-1 flex justify-center gap-3 text-xs text-gray-500">
               <a href="/privacy" className="hover:text-blue-400">
                 Privacy Policy
               </a>
@@ -52,6 +50,8 @@ export default function Home() {
             </div>
           </div>
         </footer>
+
+        <BottomNav />
       </div>
     </AuthGate>
   );
