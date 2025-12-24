@@ -22,7 +22,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/dashboard`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -80,7 +80,7 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid or expired OTP code');
     } finally {
