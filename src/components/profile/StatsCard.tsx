@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { BarChart3, Plus } from 'lucide-react';
 import type { UserProfile, WorkoutStats } from '@/lib/types/profile';
 
 interface StatsCardProps {
@@ -8,9 +10,14 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ profile, stats }: StatsCardProps) {
+  const router = useRouter();
   const currentWeight = profile?.current_weight_kg;
   const targetWeight = profile?.target_weight_kg;
   const weightUnit = profile?.weight_unit || 'kg';
+  const hasHeight = !!profile?.height_cm;
+
+  // Empty state: No weight or height data
+  const isEmpty = !currentWeight && !hasHeight;
 
   const displayWeight = (kg: number | null | undefined) => {
     if (!kg) return null;
@@ -41,6 +48,36 @@ export function StatsCard({ profile, stats }: StatsCardProps) {
       ? Math.min(100, ((currentWeight - targetWeight) / (currentWeight - targetWeight)) * 100)
       : 0;
 
+  // Empty State CTA
+  if (isEmpty) {
+    return (
+      <div className="space-y-6 rounded-lg bg-[#0f1e33] p-8 text-center shadow-lg">
+        <div className="flex justify-center">
+          <div className="rounded-full bg-blue-600/20 p-4">
+            <BarChart3 className="h-8 w-8 text-blue-400" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-xl font-semibold text-white">Complete Your Profile</h3>
+          <p className="mx-auto max-w-sm text-sm text-gray-400">
+            Add your body stats to track progress, calculate BMI, and unlock personalized
+            insights!
+          </p>
+        </div>
+
+        <button
+          onClick={() => router.push('/profile/edit')}
+          className="mx-auto flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+        >
+          <Plus className="h-5 w-5" />
+          Add Body Stats
+        </button>
+      </div>
+    );
+  }
+
+  // Regular Stats Display
   return (
     <div className="space-y-4 rounded-lg bg-[#0f1e33] p-6 shadow-lg">
       <h2 className="text-lg font-semibold text-white">Your Stats</h2>
@@ -79,9 +116,7 @@ export function StatsCard({ profile, stats }: StatsCardProps) {
           <span className="text-sm text-gray-400">BMI</span>
           <div className="text-right">
             <span className="text-xl font-bold text-white">{bmi}</span>
-            <span className={`ml-2 text-sm ${bmiCategory?.color}`}>
-              {bmiCategory?.label}
-            </span>
+            <span className={`ml-2 text-sm ${bmiCategory?.color}`}>{bmiCategory?.label}</span>
           </div>
         </div>
       )}
