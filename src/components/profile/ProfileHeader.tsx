@@ -1,6 +1,7 @@
 'use client';
 
 import type { UserProfile, WorkoutStats } from '@/lib/types/profile';
+import { getInitials } from '@/lib/profile-utils';
 
 interface ProfileHeaderProps {
   email: string;
@@ -10,20 +11,27 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ email, profile, stats }: ProfileHeaderProps) {
   const displayName = profile?.name || email.split('@')[0];
-  const initials = displayName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = getInitials(displayName);
+  const hasAvatar = !!profile?.avatar_url;
 
   return (
     <div className="space-y-4">
       {/* Avatar and Name */}
       <div className="flex items-center gap-4">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-blue-600 text-2xl font-bold text-white">
-          {initials}
-        </div>
+        {hasAvatar ? (
+          // Google OAuth avatar
+          <img
+            src={profile.avatar_url!}
+            alt={displayName}
+            className="h-20 w-20 rounded-full object-cover ring-2 ring-blue-500"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          // Fallback initials
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-2xl font-bold text-white ring-2 ring-blue-500">
+            {initials}
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-bold text-white">{displayName}</h1>
           <p className="text-sm text-gray-400">{email}</p>
