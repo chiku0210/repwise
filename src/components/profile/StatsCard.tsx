@@ -43,11 +43,6 @@ export function StatsCard({ profile, stats }: StatsCardProps) {
   const bmi = calculateBMI();
   const bmiCategory = bmi ? getBMICategory(parseFloat(bmi)) : null;
 
-  const progressPercentage =
-    currentWeight && targetWeight && targetWeight < currentWeight
-      ? Math.min(100, ((currentWeight - targetWeight) / (currentWeight - targetWeight)) * 100)
-      : 0;
-
   // Empty State CTA
   if (isEmpty) {
     return (
@@ -82,7 +77,7 @@ export function StatsCard({ profile, stats }: StatsCardProps) {
     <div className="space-y-4 rounded-lg bg-[#0f1e33] p-6 shadow-lg">
       <h2 className="text-lg font-semibold text-white">Your Stats</h2>
 
-      {/* Weight Progress */}
+      {/* Current Weight */}
       {currentWeight && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -91,21 +86,15 @@ export function StatsCard({ profile, stats }: StatsCardProps) {
               {displayWeight(currentWeight)} {weightUnit}
             </span>
           </div>
+
+          {/* Target Weight */}
           {targetWeight && (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400">Target Weight</span>
-                <span className="text-lg text-gray-300">
-                  {displayWeight(targetWeight)} {weightUnit}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-gray-700">
-                <div
-                  className="h-full bg-blue-600 transition-all"
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-            </>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-400">Target Weight</span>
+              <span className="text-lg text-gray-300">
+                {displayWeight(targetWeight)} {weightUnit}
+              </span>
+            </div>
           )}
         </div>
       )}
