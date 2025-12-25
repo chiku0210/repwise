@@ -1,7 +1,7 @@
 'use client';
 
 import type { UserProfile, WorkoutStats } from '@/lib/types/profile';
-import { getInitials } from '@/lib/profile-utils';
+import { getInitials } from '@/lib/utils/profile';
 
 interface ProfileHeaderProps {
   email: string;
