@@ -50,11 +50,7 @@ export default function ProfilePage() {
           ) : (
             <>
               {/* Profile Header with Stats */}
-              <ProfileHeader
-                email={user?.email || ''}
-                profile={profile}
-                stats={stats}
-              />
+              <ProfileHeader email={user?.email || ''} profile={profile} stats={stats} createdAt={profile?.created_at || ''} />
 
               {/* Stats Overview Card */}
               <StatsCard profile={profile} stats={stats} />
@@ -79,18 +75,22 @@ export default function ProfilePage() {
 
               {/* Fitness Profile */}
               {profile && (
-                <SettingsSection title="Fitness Profile" icon={<Dumbbell className="h-5 w-5 text-blue-500" />} defaultOpen>
+                <SettingsSection
+                  title="Fitness Profile"
+                  icon={<Dumbbell className="h-5 w-5 text-blue-500" />}
+                  defaultOpen
+                >
                   <div className="space-y-3">
                     <div className="flex justify-between py-2">
                       <span className="text-sm text-gray-400">Experience Level</span>
-                      <span className="text-sm capitalize text-white">
+                      <span className="text-sm text-white capitalize">
                         {profile.experience_level}
                       </span>
                     </div>
                     {profile.primary_goal && (
                       <div className="flex justify-between border-t border-gray-700 py-2">
                         <span className="text-sm text-gray-400">Primary Goal</span>
-                        <span className="text-sm capitalize text-white">
+                        <span className="text-sm text-white capitalize">
                           {profile.primary_goal.replace('_', ' ')}
                         </span>
                       </div>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
                     {profile.preferred_split && (
                       <div className="flex justify-between border-t border-gray-700 py-2">
                         <span className="text-sm text-gray-400">Preferred Split</span>
-                        <span className="text-sm uppercase text-white">
+                        <span className="text-sm text-white uppercase">
                           {profile.preferred_split.replace('_', '/')}
                         </span>
                       </div>
@@ -122,9 +122,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex justify-between border-t border-gray-700 py-2">
                     <span className="text-sm text-gray-400">User ID</span>
-                    <span className="text-xs text-gray-500">
-                      {user?.id.slice(0, 8)}...
-                    </span>
+                    <span className="text-xs text-gray-500">{user?.id.slice(0, 8)}...</span>
                   </div>
                   <div className="flex justify-between border-t border-gray-700 py-2">
                     <span className="text-sm text-gray-400">Member since</span>
@@ -141,17 +139,20 @@ export default function ProfilePage() {
               </SettingsSection>
 
               {/* App Settings */}
-              <SettingsSection title="Settings" icon={<Settings className="h-5 w-5 text-gray-500" />}>
+              <SettingsSection
+                title="Settings"
+                icon={<Settings className="h-5 w-5 text-gray-500" />}
+              >
                 <div className="space-y-3">
                   <div className="flex justify-between py-2">
                     <span className="text-sm text-gray-400">Weight Unit</span>
-                    <span className="text-sm uppercase text-white">
+                    <span className="text-sm text-white uppercase">
                       {profile?.weight_unit || 'kg'}
                     </span>
                   </div>
                   <div className="flex justify-between border-t border-gray-700 py-2">
                     <span className="text-sm text-gray-400">Height Unit</span>
-                    <span className="text-sm uppercase text-white">
+                    <span className="text-sm text-white uppercase">
                       {profile?.height_unit || 'cm'}
                     </span>
                   </div>
@@ -185,6 +186,10 @@ export default function ProfilePage() {
         </div>
 
         <BottomNav />
+        <footer className="pt-8 pb-24 text-center text-xs text-gray-500">
+          <p>Repwise v1.0.0</p>
+          <p className="mt-1">Built with Next.js + Supabase</p>
+        </footer>
       </main>
     </AuthGate>
   );

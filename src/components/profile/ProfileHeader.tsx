@@ -1,5 +1,6 @@
 'use client';
 
+import { Calendar } from 'lucide-react';
 import type { UserProfile, WorkoutStats } from '@/lib/types/profile';
 import { getInitials } from '@/lib/utils/profile';
 
@@ -7,9 +8,10 @@ interface ProfileHeaderProps {
   email: string;
   profile: UserProfile | null;
   stats: WorkoutStats;
+  createdAt: string;
 }
 
-export function ProfileHeader({ email, profile, stats }: ProfileHeaderProps) {
+export function ProfileHeader({ email, profile, stats, createdAt }: ProfileHeaderProps) {
   const displayName = profile?.name || email.split('@')[0];
   const initials = getInitials(displayName);
   const hasAvatar = !!profile?.avatar_url;
@@ -35,6 +37,14 @@ export function ProfileHeader({ email, profile, stats }: ProfileHeaderProps) {
         <div>
           <h1 className="text-2xl font-bold text-white">{displayName}</h1>
           <p className="text-sm text-gray-400">{email}</p>
+          <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+            <Calendar className="-mt-0.5 h-3 w-3" />
+            Member since{' '}
+            {new Date(createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              year: 'numeric',
+            })}
+          </p>
         </div>
       </div>
 
