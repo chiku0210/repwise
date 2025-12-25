@@ -25,12 +25,25 @@ export function useProfile(userId: string | undefined) {
           .single();
 
         if (error) {
-          // If profile doesn't exist, create one
+          // If profile doesn't exist, create one with OAuth data
           if (error.code === 'PGRST116') {
+            // Get user metadata from auth session for Google OAuth data
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            // Extract name and avatar from OAuth metadata (Google provides these)
+            const fullName = user?.user_metadata?.full_name || 
+                            user?.user_metadata?.name || 
+                            null;
+            const avatarUrl = user?.user_metadata?.avatar_url || 
+                             user?.user_metadata?.picture || 
+                             null;
+
             const { data: newProfile, error: createError } = await supabase
               .from('user_profiles')
               .insert({
                 id: userId,
+                name: fullName, // Auto-fill from Google OAuth
+                avatar_url: avatarUrl, // Auto-fill from Google OAuth
                 experience_level: 'beginner',
                 training_frequency: 3,
                 weight_unit: 'kg',
