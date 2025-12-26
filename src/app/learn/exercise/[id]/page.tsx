@@ -64,10 +64,10 @@ export default function ExerciseDetailPage() {
           ...exerciseData,
           primaryMuscleNames: (exerciseData.primary_muscles || [])
             .map((id: string) => muscleMap.get(id))
-            .filter((name): name is string => !!name),
+            .filter((name: string | undefined): name is string => !!name),
           secondaryMuscleNames: (exerciseData.secondary_muscles || [])
             .map((id: string) => muscleMap.get(id))
-            .filter((name): name is string => !!name),
+            .filter((name: string | undefined): name is string => !!name),
         };
 
         setExercise(exerciseWithNames);
