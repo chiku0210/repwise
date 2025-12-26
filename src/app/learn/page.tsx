@@ -5,51 +5,103 @@ import { BottomNav } from '@/components/ui/bottom-nav';
 import { AuthGate } from '@/components/AuthGate';
 import { MUSCLE_GROUPS } from '@/lib/types/exercise';
 
+interface MuscleCardProps {
+  group: {
+    id: string;
+    name: string;
+    description: string;
+  };
+}
+
+function MuscleCard({ group }: MuscleCardProps) {
+  return (
+    <Link href={`/learn/${group.id}`}>
+      <div className="group relative h-64 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-[#0f1e33]/60 to-[#0a1628]/80 p-6 shadow-xl shadow-black/50 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/20">
+        {/* Anatomy SVG Placeholder - Will be replaced with actual SVGs */}
+        <div className="mb-4 flex h-40 items-center justify-center">
+          <div className="flex h-32 w-32 items-center justify-center rounded-full bg-blue-500/10 text-6xl transition-all duration-300 group-hover:bg-blue-500/20 group-hover:shadow-lg group-hover:shadow-blue-500/50">
+            {/* Placeholder - will be replaced with <AnatomySVG /> */}
+            <svg
+              className="h-24 w-24 text-blue-400/60 transition-all duration-300 group-hover:text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-2">
+          <h3 className="text-2xl font-bold text-white transition-colors group-hover:text-blue-400">
+            {group.name}
+          </h3>
+          <p className="text-sm text-gray-400">{group.description}</p>
+        </div>
+
+        {/* Arrow indicator */}
+        <div className="absolute bottom-6 right-6 opacity-0 transition-all duration-300 group-hover:opacity-100">
+          <svg
+            className="h-6 w-6 text-blue-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M13 7l5 5m0 0l-5 5m5-5H6"
+            />
+          </svg>
+        </div>
+
+        {/* Subtle gradient overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      </div>
+    </Link>
+  );
+}
+
 export default function LearnPage() {
   return (
     <AuthGate>
       <main className="min-h-screen bg-[#0a1628] pb-20">
-        <div className="mx-auto max-w-md space-y-6 p-6">
+        <div className="mx-auto max-w-6xl space-y-8 p-6">
           {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-white">Learn</h1>
-            <p className="text-sm text-gray-400">
-              Browse exercises by muscle group
+          <div className="space-y-3">
+            <h1 className="text-4xl font-bold text-white">Learn</h1>
+            <p className="text-base text-gray-400">
+              Browse exercises by muscle group and master your form
             </p>
           </div>
 
-          {/* Muscle Group Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Muscle Group Grid - Responsive: 1 col mobile, 2 col tablet, 3 col desktop */}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {MUSCLE_GROUPS.map((group) => (
-              <Link
-                key={group.id}
-                href={`/learn/${group.id}`}
-                className="group"
-              >
-                <div
-                  className={`rounded-lg bg-gradient-to-br ${group.color} p-6 shadow-lg transition-all hover:scale-105 hover:shadow-xl`}
-                >
-                  <div className="text-center">
-                    <div className="mb-2 text-4xl">{group.emoji}</div>
-                    <h3 className="text-lg font-bold text-white">
-                      {group.name}
-                    </h3>
-                    <p className="mt-1 text-xs text-white/80">
-                      {group.description}
-                    </p>
-                  </div>
-                </div>
-              </Link>
+              <MuscleCard key={group.id} group={group} />
             ))}
           </div>
 
           {/* Info Card */}
-          <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
-            <p className="text-sm text-gray-300">
-              💡 <span className="font-semibold">Tip:</span> Focus on compound
-              movements for maximum gains. Each exercise includes detailed form
-              cues.
-            </p>
+          <div className="rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent p-6 backdrop-blur-sm">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 text-2xl">💡</div>
+              <div className="space-y-1">
+                <p className="font-semibold text-white">Pro Tip</p>
+                <p className="text-sm leading-relaxed text-gray-300">
+                  Focus on compound movements for maximum gains. Each exercise
+                  includes detailed form cues to help you lift safely and
+                  effectively.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
