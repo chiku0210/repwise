@@ -27,52 +27,39 @@ export interface ExerciseWithMuscles extends Exercise {
 export interface MuscleGroup {
   id: string;
   name: string;
-  emoji: string;
-  color: string;
   description: string;
+  // svgComponent will be added later when we integrate anatomy SVGs
 }
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
   {
     id: 'chest',
     name: 'Chest',
-    emoji: '💪',
-    color: 'from-blue-500 to-blue-600',
-    description: 'Pecs, push movements',
+    description: 'Pectorals, push movements',
   },
   {
     id: 'back',
     name: 'Back',
-    emoji: '🏋️',
-    color: 'from-green-500 to-green-600',
-    description: 'Lats, upper back, pull movements',
+    description: 'Lats, traps, upper back, pull movements',
   },
   {
     id: 'shoulders',
     name: 'Shoulders',
-    emoji: '🤸',
-    color: 'from-yellow-500 to-yellow-600',
-    description: 'Delts, overhead movements',
+    description: 'Deltoids, overhead movements',
   },
   {
     id: 'arms',
     name: 'Arms',
-    emoji: '💪',
-    color: 'from-purple-500 to-purple-600',
     description: 'Biceps, triceps, forearms',
   },
   {
     id: 'legs',
     name: 'Legs',
-    emoji: '🦵',
-    color: 'from-red-500 to-red-600',
     description: 'Quads, hamstrings, glutes, calves',
   },
   {
     id: 'core',
     name: 'Core',
-    emoji: '🧘',
-    color: 'from-indigo-500 to-indigo-600',
     description: 'Abs, obliques, lower back',
   },
 ];
