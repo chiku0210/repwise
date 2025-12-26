@@ -4,6 +4,12 @@ import Link from 'next/link';
 import { BottomNav } from '@/components/ui/bottom-nav';
 import { AuthGate } from '@/components/AuthGate';
 import { MUSCLE_GROUPS } from '@/lib/types/exercise';
+import { ChestSVG } from '@/components/anatomy/ChestSVG';
+import { BackSVG } from '@/components/anatomy/BackSVG';
+import { ShouldersSVG } from '@/components/anatomy/ShouldersSVG';
+import { ArmsSVG } from '@/components/anatomy/ArmsSVG';
+import { LegsSVG } from '@/components/anatomy/LegsSVG';
+import { CoreSVG } from '@/components/anatomy/CoreSVG';
 
 interface MuscleCardProps {
   group: {
@@ -13,27 +19,28 @@ interface MuscleCardProps {
   };
 }
 
+// Map muscle group IDs to SVG components
+const ANATOMY_SVGS: Record<string, React.ComponentType<{ className?: string }>> = {
+  chest: ChestSVG,
+  back: BackSVG,
+  shoulders: ShouldersSVG,
+  arms: ArmsSVG,
+  legs: LegsSVG,
+  core: CoreSVG,
+};
+
 function MuscleCard({ group }: MuscleCardProps) {
+  const AnatomySVG = ANATOMY_SVGS[group.id];
+
   return (
     <Link href={`/learn/${group.id}`}>
       <div className="group relative h-64 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-[#0f1e33]/60 to-[#0a1628]/80 p-6 shadow-xl shadow-black/50 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/20">
-        {/* Anatomy SVG Placeholder - Will be replaced with actual SVGs */}
-        <div className="mb-4 flex h-40 items-center justify-center">
-          <div className="flex h-32 w-32 items-center justify-center rounded-full bg-blue-500/10 text-6xl transition-all duration-300 group-hover:bg-blue-500/20 group-hover:shadow-lg group-hover:shadow-blue-500/50">
-            {/* Placeholder - will be replaced with <AnatomySVG /> */}
-            <svg
-              className="h-24 w-24 text-blue-400/60 transition-all duration-300 group-hover:text-blue-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
+        {/* Anatomy SVG */}
+        <div className="mb-4 flex h-32 items-center justify-center">
+          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-blue-500/10 transition-all duration-300 group-hover:bg-blue-500/20 group-hover:shadow-lg group-hover:shadow-blue-500/50">
+            {AnatomySVG && (
+              <AnatomySVG className="h-20 w-20 text-blue-400/60 transition-all duration-300 group-hover:text-blue-400" />
+            )}
           </div>
         </div>
 
@@ -42,7 +49,7 @@ function MuscleCard({ group }: MuscleCardProps) {
           <h3 className="text-2xl font-bold text-white transition-colors group-hover:text-blue-400">
             {group.name}
           </h3>
-          <p className="text-sm text-gray-400">{group.description}</p>
+          <p className="text-sm leading-relaxed text-gray-400">{group.description}</p>
         </div>
 
         {/* Arrow indicator */}
