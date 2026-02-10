@@ -30,13 +30,16 @@ export default function QuickLogPage() {
   const [showExercisePicker, setShowExercisePicker] = useState(true);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [sets, setSets] = useState<WorkoutSet[]>([]);
-  const [workoutId, setWorkoutId] = useState<string | null>(null);
+  const [workoutSessionId, setWorkoutSessionId] = useState<string | null>(null);
+  const [workoutExerciseId, setWorkoutExerciseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Create workout record on first set
-  const createWorkout = async (): Promise<string | null> => {
+  // Create workout session and workout_exercise record on first set
+  const createWorkoutSession = async (
+    exerciseId: string
+  ): Promise<{ sessionId: string; workoutExerciseId: string } | null> => {
     if (typeof window === 'undefined') return null;
 
     try {
@@ -48,20 +51,39 @@ export default function QuickLogPage() {
         return null;
       }
 
-      const { data, error: workoutError } = await supabase
-        .from('workouts')
+      // Create workout session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('workout_sessions')
         .insert({
           user_id: user.id,
           started_at: new Date().toISOString(),
+          workout_name: 'Quick Log',
         })
         .select('id')
         .single();
 
-      if (workoutError) throw workoutError;
+      if (sessionError) throw sessionError;
 
-      return data.id;
+      // Create workout_exercise record
+      const { data: workoutExData, error: workoutExError } = await supabase
+        .from('workout_exercises')
+        .insert({
+          workout_id: sessionData.id,
+          exercise_id: exerciseId,
+          order_index: 1,
+          target_sets: 3, // Default
+        })
+        .select('id')
+        .single();
+
+      if (workoutExError) throw workoutExError;
+
+      return {
+        sessionId: sessionData.id,
+        workoutExerciseId: workoutExData.id,
+      };
     } catch (err) {
-      console.error('Error creating workout:', err);
+      console.error('Error creating workout session:', err);
       setError('Failed to create workout. Please try again.');
       return null;
     }
@@ -76,29 +98,32 @@ export default function QuickLogPage() {
     setError(null);
 
     try {
-      // Create workout if this is the first set
-      let currentWorkoutId = workoutId;
-      if (!currentWorkoutId) {
-        currentWorkoutId = await createWorkout();
-        if (!currentWorkoutId) {
+      // Create workout session if this is the first set
+      let currentWorkoutExerciseId = workoutExerciseId;
+      if (!currentWorkoutExerciseId) {
+        const result = await createWorkoutSession(selectedExercise.id);
+        if (!result) {
           setLoading(false);
           return;
         }
-        setWorkoutId(currentWorkoutId);
+        setWorkoutSessionId(result.sessionId);
+        setWorkoutExerciseId(result.workoutExerciseId);
+        currentWorkoutExerciseId = result.workoutExerciseId;
       }
 
       const supabase = getSupabaseBrowserClient();
 
-      // Insert set
+      // Insert set into exercise_sets table
       const { data, error: setError } = await supabase
-        .from('sets')
+        .from('exercise_sets')
         .insert({
-          workout_id: currentWorkoutId,
-          exercise_id: selectedExercise.id,
+          workout_exercise_id: currentWorkoutExerciseId,
           set_number: sets.length + 1,
           weight_kg: setData.weight_kg,
           reps: setData.reps,
           rpe: setData.rpe,
+          completed: true,
+          timestamp: new Date().toISOString(),
         })
         .select('id')
         .single();
@@ -132,7 +157,7 @@ export default function QuickLogPage() {
       const supabase = getSupabaseBrowserClient();
 
       const { error: deleteError } = await supabase
-        .from('sets')
+        .from('exercise_sets')
         .delete()
         .eq('id', setId);
 
@@ -152,7 +177,7 @@ export default function QuickLogPage() {
 
   // Finish workout
   const handleFinishWorkout = async () => {
-    if (!workoutId || sets.length === 0) return;
+    if (!workoutSessionId || sets.length === 0) return;
     if (typeof window === 'undefined') return;
 
     setLoading(true);
@@ -161,11 +186,19 @@ export default function QuickLogPage() {
     try {
       const supabase = getSupabaseBrowserClient();
 
-      // Update workout with finished timestamp
+      // Update workout session with completed timestamp and stats
+      const totalVolume = sets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
+      const totalReps = sets.reduce((sum, set) => sum + set.reps, 0);
+
       const { error: updateError } = await supabase
-        .from('workouts')
-        .update({ finished_at: new Date().toISOString() })
-        .eq('id', workoutId);
+        .from('workout_sessions')
+        .update({
+          completed_at: new Date().toISOString(),
+          total_sets: sets.length,
+          total_reps: totalReps,
+          total_volume_kg: totalVolume,
+        })
+        .eq('id', workoutSessionId);
 
       if (updateError) throw updateError;
 
