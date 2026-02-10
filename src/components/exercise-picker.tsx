@@ -144,7 +144,6 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
 
   const handleExerciseSelect = (exercise: Exercise) => {
     onSelect(exercise);
-    onClose();
   };
 
   return (
