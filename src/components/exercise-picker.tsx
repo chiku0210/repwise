@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
-import { Search, X, Dumbbell } from 'lucide-react';
+import { Search, X, Dumbbell, AlertCircle } from 'lucide-react';
 
 interface Exercise {
   id: string;
@@ -42,13 +42,26 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
       try {
         const supabase = getSupabaseBrowserClient();
 
+        console.log('Fetching exercises and muscles...');
+
         // Fetch exercises
         const { data: exercisesData, error: exercisesError } = await supabase
           .from('exercises')
           .select('id, name, equipment, primary_muscles, secondary_muscles, is_compound')
           .order('name');
 
-        if (exercisesError) throw exercisesError;
+        console.log('Exercises response:', { data: exercisesData, error: exercisesError });
+
+        if (exercisesError) {
+          console.error('Exercise fetch error:', exercisesError);
+          throw new Error(`Failed to fetch exercises: ${exercisesError.message}`);
+        }
+
+        if (!exercisesData || exercisesData.length === 0) {
+          throw new Error(
+            'No exercises found. Please ensure: 1) The exercises table exists, 2) It has data, 3) RLS policies allow public read access'
+          );
+        }
 
         // Fetch muscles
         const { data: musclesData, error: musclesError } = await supabase
@@ -56,13 +69,30 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
           .select('id, name, muscle_group')
           .order('name');
 
-        if (musclesError) throw musclesError;
+        console.log('Muscles response:', { data: musclesData, error: musclesError });
 
-        setExercises(exercisesData || []);
-        setMuscles(musclesData || []);
+        if (musclesError) {
+          console.error('Muscle fetch error:', musclesError);
+          throw new Error(`Failed to fetch muscles: ${musclesError.message}`);
+        }
+
+        if (!musclesData || musclesData.length === 0) {
+          throw new Error(
+            'No muscles found. Please ensure: 1) The muscles table exists, 2) It has data, 3) RLS policies allow public read access'
+          );
+        }
+
+        setExercises(exercisesData);
+        setMuscles(musclesData);
+        console.log('Data loaded successfully:', {
+          exerciseCount: exercisesData.length,
+          muscleCount: musclesData.length,
+        });
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load exercises. Please try again.');
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to load exercises. Please try again.';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -138,6 +168,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search exercises..."
               className="w-full rounded-lg bg-[#0a1628] py-3 pl-10 pr-4 text-white placeholder-gray-400 outline-none ring-1 ring-gray-700 focus:ring-2 focus:ring-blue-500 transition-all"
+              disabled={loading || !!error}
             />
           </div>
         </div>
@@ -149,7 +180,8 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
               <button
                 key={group}
                 onClick={() => setSelectedMuscleGroup(group)}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                disabled={loading || !!error}
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                   selectedMuscleGroup === group
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
@@ -168,8 +200,23 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
             </div>
           ) : error ? (
-            <div className="rounded-lg bg-red-900/20 p-4 text-center text-red-400">
-              {error}
+            <div className="rounded-lg bg-red-900/20 p-6 border border-red-800">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-400 mb-2">Database Error</h3>
+                  <p className="text-sm text-red-300 mb-4">{error}</p>
+                  <div className="text-xs text-red-400/80 space-y-1">
+                    <p className="font-semibold">Common fixes:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>Check if tables 'exercises' and 'muscles' exist in Supabase</li>
+                      <li>Ensure tables have data (run seed scripts if needed)</li>
+                      <li>Verify RLS policies allow public SELECT access</li>
+                      <li>Check browser console for detailed error logs</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : filteredExercises.length === 0 ? (
             <div className="py-12 text-center text-gray-400">
@@ -195,7 +242,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
                       <div className="flex-1">
                         <h3 className="font-semibold text-white">{exercise.name}</h3>
                         <p className="mt-1 text-sm text-gray-400">
-                          {primaryMuscleNames}
+                          {primaryMuscleNames || 'No muscle data'}
                         </p>
                       </div>
                       <div className="ml-3 flex flex-col items-end gap-1">
