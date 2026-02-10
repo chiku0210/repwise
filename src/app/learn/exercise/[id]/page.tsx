@@ -5,16 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { BottomNav } from '@/components/ui/bottom-nav';
 import { AuthGate } from '@/components/AuthGate';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
-import { Exercise, Muscle } from '@/lib/types/exercise';
-
-const EQUIPMENT_ICONS: Record<string, string> = {
-  barbell: '🏋️',
-  dumbbell: '💪',
-  machine: '⚙️',
-  bodyweight: '🧘',
-  cable: '🔗',
-  other: '🎯',
-};
+import { getMuscleMap } from '@/lib/utils/muscles';
+import { Exercise, EQUIPMENT_ICONS, ICON_PLACEHOLDER } from '@/lib/types/exercise';
 
 interface ExerciseWithMuscleNames extends Exercise {
   primaryMuscleNames: string[];
@@ -30,58 +22,50 @@ export default function ExerciseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchExercise() {
-      try {
-        setLoading(true);
-        setError(null);
-        const supabase = getSupabaseBrowserClient();
+  async function fetchExercise() {
+    try {
+      setLoading(true);
+      setError(null);
+      const supabase = getSupabaseBrowserClient();
 
-        // Fetch the exercise
-        const { data: exerciseData, error: exerciseError } = await supabase
-          .from('exercises')
-          .select('*')
-          .eq('id', exerciseId)
-          .single();
+      // Fetch the exercise
+      const { data: exerciseData, error: exerciseError } = await supabase
+        .from('exercises')
+        .select('*')
+        .eq('id', exerciseId)
+        .single();
 
-        if (exerciseError) throw exerciseError;
-        if (!exerciseData) throw new Error('Exercise not found');
+      if (exerciseError) throw exerciseError;
+      if (!exerciseData) throw new Error('Exercise not found');
 
-        // Fetch all muscles to map IDs to names
-        const { data: muscles, error: musclesError } = await supabase
-          .from('muscles')
-          .select('*');
+      // Fetch muscle mapping using shared utility
+      const muscleMap = await getMuscleMap(supabase);
 
-        if (musclesError) throw musclesError;
+      // Map muscle IDs to names
+      const exerciseWithNames: ExerciseWithMuscleNames = {
+        ...exerciseData,
+        primaryMuscleNames: (exerciseData.primary_muscles || [])
+          .map((id: string) => muscleMap.get(id))
+          .filter((name: string | undefined): name is string => !!name),
+        secondaryMuscleNames: (exerciseData.secondary_muscles || [])
+          .map((id: string) => muscleMap.get(id))
+          .filter((name: string | undefined): name is string => !!name),
+      };
 
-        const muscleMap = new Map<string, string>();
-        muscles?.forEach((m: Muscle) => {
-          muscleMap.set(m.id, m.name);
-        });
-
-        // Map muscle IDs to names
-        const exerciseWithNames: ExerciseWithMuscleNames = {
-          ...exerciseData,
-          primaryMuscleNames: (exerciseData.primary_muscles || [])
-            .map((id: string) => muscleMap.get(id))
-            .filter((name: string | undefined): name is string => !!name),
-          secondaryMuscleNames: (exerciseData.secondary_muscles || [])
-            .map((id: string) => muscleMap.get(id))
-            .filter((name: string | undefined): name is string => !!name),
-        };
-
-        setExercise(exerciseWithNames);
-      } catch (err) {
-        console.error('Error fetching exercise:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load exercise');
-      } finally {
-        setLoading(false);
-      }
+      setExercise(exerciseWithNames);
+    } catch (err) {
+      console.error('Error fetching exercise:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load exercise');
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     if (exerciseId) {
       fetchExercise();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseId]);
 
   return (
@@ -92,23 +76,36 @@ export default function ExerciseDetailPage() {
           <button
             onClick={() => router.back()}
             className="text-sm text-gray-400 hover:text-gray-300"
+            aria-label="Go back to previous page"
           >
             ← Back
           </button>
 
-          {/* Loading State */}
+          {/* Loading State - Match content structure */}
           {loading && (
-            <div className="space-y-4">
-              <div className="h-12 animate-pulse rounded-lg bg-[#0f1e33]" />
+            <div className="space-y-6">
+              {/* Header skeleton */}
+              <div className="space-y-3">
+                <div className="h-10 animate-pulse rounded-lg bg-[#0f1e33]" />
+                <div className="h-6 w-1/3 animate-pulse rounded bg-[#0f1e33]" />
+              </div>
+              {/* Muscles section skeleton */}
               <div className="h-32 animate-pulse rounded-lg bg-[#0f1e33]" />
+              {/* Form cues section skeleton */}
               <div className="h-64 animate-pulse rounded-lg bg-[#0f1e33]" />
             </div>
           )}
 
           {/* Error State */}
           {error && (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4">
+            <div className="space-y-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4">
               <p className="text-sm text-red-400">Error: {error}</p>
+              <button
+                onClick={fetchExercise}
+                className="text-sm text-blue-400 hover:text-blue-300 underline"
+              >
+                Try Again
+              </button>
             </div>
           )}
 
@@ -121,7 +118,11 @@ export default function ExerciseDetailPage() {
                   <h1 className="text-3xl font-bold text-white">
                     {exercise.name}
                   </h1>
-                  <span className="text-4xl">
+                  <span 
+                    className="text-lg font-mono text-gray-400"
+                    title={exercise.equipment_type}
+                    aria-label={`Equipment: ${exercise.equipment_type}`}
+                  >
                     {EQUIPMENT_ICONS[exercise.equipment_type] ||
                       EQUIPMENT_ICONS.other}
                   </span>
@@ -131,7 +132,10 @@ export default function ExerciseDetailPage() {
                     {exercise.equipment_type}
                   </span>
                   {exercise.is_compound && (
-                    <span className="rounded bg-blue-500/20 px-3 py-1 text-xs font-medium text-blue-400">
+                    <span 
+                      className="rounded bg-blue-500/20 px-3 py-1 text-xs font-medium text-blue-400"
+                      aria-label="Compound exercise"
+                    >
                       Compound
                     </span>
                   )}
@@ -206,17 +210,21 @@ export default function ExerciseDetailPage() {
               {/* Action Button (Placeholder) */}
               <button
                 disabled
-                className="w-full rounded-lg bg-blue-500/50 py-3 font-semibold text-white opacity-50 cursor-not-allowed"
+                className="w-full rounded-lg bg-blue-500/50 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Add to Quick Log - Coming Soon"
               >
                 Add to Quick Log (Coming Soon)
               </button>
 
               {/* Info */}
               <div className="rounded-lg border border-gray-700 bg-[#0f1e33] p-4">
-                <p className="text-xs text-gray-400">
-                  💡 Focus on controlled movements and proper form over heavy
-                  weight. Record your sets in the Log tab.
-                </p>
+                <div className="flex items-start gap-3">
+                  <span className="text-lg font-mono text-blue-400/60">{ICON_PLACEHOLDER}</span>
+                  <p className="text-xs text-gray-400">
+                    Focus on controlled movements and proper form over heavy
+                    weight. Record your sets in the Log tab.
+                  </p>
+                </div>
               </div>
             </div>
           )}
