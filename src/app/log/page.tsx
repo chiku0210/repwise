@@ -193,34 +193,6 @@ export default function LogPage() {
     fetchWorkouts(nextPage);
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0a1628]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#0a1628] p-4">
-        <div className="mx-auto max-w-2xl pt-20">
-          <div className="rounded-lg bg-red-900/20 border border-red-800 p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-red-400 mb-1">Error Loading Workouts</h3>
-                <p className="text-sm text-red-300">{error}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen flex-col bg-[#0a1628]">
       {/* Header */}
@@ -232,50 +204,71 @@ export default function LogPage() {
 
       {/* Content */}
       <main className="flex-1 pb-24">
-        <div className="mx-auto max-w-2xl px-4 py-6">
-          {workouts.length === 0 ? (
-            <EmptyWorkoutState />
-          ) : (
-            <>
-              {/* Workout List */}
-              <div className="space-y-3">
-                {workouts.map((workout) => (
-                  <WorkoutCard key={workout.id} workout={workout} />
-                ))}
+        {loading ? (
+          // Loading state - centered spinner
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          </div>
+        ) : error ? (
+          // Error state
+          <div className="mx-auto max-w-2xl px-4 pt-20">
+            <div className="rounded-lg bg-red-900/20 border border-red-800 p-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-red-400 mb-1">Error Loading Workouts</h3>
+                  <p className="text-sm text-red-300">{error}</p>
+                </div>
               </div>
-
-              {/* Load More Button */}
-              {hasMore && (
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={handleLoadMore}
-                    disabled={loadingMore}
-                    className="rounded-lg bg-gray-800 px-6 py-3 font-semibold text-white hover:bg-gray-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loadingMore ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading...
-                      </span>
-                    ) : (
-                      'Load More'
-                    )}
-                  </button>
+            </div>
+          </div>
+        ) : (
+          // Content loaded
+          <div className="mx-auto max-w-2xl px-4 py-6">
+            {workouts.length === 0 ? (
+              <EmptyWorkoutState />
+            ) : (
+              <>
+                {/* Workout List */}
+                <div className="space-y-3">
+                  {workouts.map((workout) => (
+                    <WorkoutCard key={workout.id} workout={workout} />
+                  ))}
                 </div>
-              )}
 
-              {/* End of List Message */}
-              {!hasMore && workouts.length > 0 && (
-                <div className="mt-6 text-center text-sm text-gray-500">
-                  You've reached the end of your workout history
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                {/* Load More Button */}
+                {hasMore && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                      className="rounded-lg bg-gray-800 px-6 py-3 font-semibold text-white hover:bg-gray-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingMore ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading...
+                        </span>
+                      ) : (
+                        'Load More'
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* End of List Message */}
+                {!hasMore && workouts.length > 0 && (
+                  <div className="mt-6 text-center text-sm text-gray-500">
+                    You've reached the end of your workout history
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - Always visible */}
       <BottomNav />
     </div>
   );
