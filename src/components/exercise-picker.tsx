@@ -16,7 +16,7 @@ interface Exercise {
 interface Muscle {
   id: string;
   name: string;
-  group: string; // Changed from muscle_group to group
+  group: string;
 }
 
 interface ExercisePickerProps {
@@ -63,7 +63,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
           );
         }
 
-        // Fetch muscles (using 'group' column, not 'muscle_group')
+        // Fetch muscles
         const { data: musclesData, error: musclesError } = await supabase
           .from('muscles')
           .select('id, name, group')
@@ -84,6 +84,10 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
 
         setExercises(exercisesData);
         setMuscles(musclesData);
+        
+        // Log unique muscle groups for debugging
+        const uniqueGroups = [...new Set(musclesData.map(m => m.group))];
+        console.log('Unique muscle groups in database:', uniqueGroups);
         console.log('Data loaded successfully:', {
           exerciseCount: exercisesData.length,
           muscleCount: musclesData.length,
@@ -124,17 +128,36 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
       );
     }
 
-    // Filter by muscle group
+    // Filter by muscle group (case-insensitive)
     if (selectedMuscleGroup !== 'All') {
       filtered = filtered.filter((ex) => {
         const primaryMuscleGroups = ex.primary_muscles
-          .map((muscleId) => muscles.find((m) => m.id === muscleId)?.group) // Changed from muscle_group to group
+          .map((muscleId) => {
+            const muscle = muscles.find((m) => m.id === muscleId);
+            return muscle?.group;
+          })
           .filter(Boolean);
 
-        return primaryMuscleGroups.includes(selectedMuscleGroup);
+        // Case-insensitive comparison
+        const hasMatchingGroup = primaryMuscleGroups.some(
+          (group) => group?.toLowerCase() === selectedMuscleGroup.toLowerCase()
+        );
+
+        // Debug log for first exercise when filter is active
+        if (ex === exercises[0]) {
+          console.log('Filter Debug:', {
+            selectedMuscleGroup,
+            exerciseName: ex.name,
+            primaryMuscleGroups,
+            hasMatch: hasMatchingGroup,
+          });
+        }
+
+        return hasMatchingGroup;
       });
     }
 
+    console.log(`Filtered exercises: ${filtered.length} of ${exercises.length}`);
     return filtered;
   }, [exercises, muscles, searchQuery, selectedMuscleGroup]);
 
@@ -223,6 +246,11 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
               <Dumbbell className="mx-auto mb-3 h-12 w-12 opacity-50" />
               <p>No exercises found</p>
               <p className="mt-1 text-sm">Try adjusting your search or filters</p>
+              {selectedMuscleGroup !== 'All' && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Check console for filter debug info
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
