@@ -35,6 +35,7 @@ export default function QuickLogPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [hasClosedPicker, setHasClosedPicker] = useState(false);
 
   // Create workout session and workout_exercise record on first set
   const createWorkoutSession = async (
@@ -221,13 +222,26 @@ export default function QuickLogPage() {
     setShowExercisePicker(false);
   };
 
+  const handlePickerClose = () => {
+    // Mark that user has explicitly closed the picker
+    setHasClosedPicker(true);
+    
+    if (!selectedExercise) {
+      // If no exercise selected and user closes, go back
+      router.push('/');
+    } else {
+      // Just close the modal
+      setShowExercisePicker(false);
+    }
+  };
+
   const handleBackClick = () => {
     if (sets.length > 0) {
       if (confirm('You have unsaved sets. Are you sure you want to leave?')) {
-        router.push('/dashboard');
+        router.push('/');
       }
     } else {
-      router.push('/dashboard');
+      router.push('/');
     }
   };
 
@@ -336,15 +350,7 @@ export default function QuickLogPage() {
       {showExercisePicker && (
         <ExercisePicker
           onSelect={handleExerciseSelect}
-          onClose={() => {
-            if (!selectedExercise) {
-              // If no exercise selected yet, go back to dashboard
-              router.push('/dashboard');
-            } else {
-              // Just close the modal
-              setShowExercisePicker(false);
-            }
-          }}
+          onClose={handlePickerClose}
         />
       )}
     </div>
