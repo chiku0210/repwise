@@ -35,7 +35,6 @@ export default function QuickLogPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [hasClosedPicker, setHasClosedPicker] = useState(false);
 
   // Create workout session and workout_exercise record on first set
   const createWorkoutSession = async (
@@ -223,11 +222,8 @@ export default function QuickLogPage() {
   };
 
   const handlePickerClose = () => {
-    // Mark that user has explicitly closed the picker
-    setHasClosedPicker(true);
-    
     if (!selectedExercise) {
-      // If no exercise selected and user closes, go back
+      // If no exercise selected and user closes picker, go back to home
       router.push('/');
     } else {
       // Just close the modal
@@ -237,10 +233,16 @@ export default function QuickLogPage() {
 
   const handleBackClick = () => {
     if (sets.length > 0) {
+      // If sets are logged, confirm before leaving
       if (confirm('You have unsaved sets. Are you sure you want to leave?')) {
         router.push('/');
       }
+    } else if (selectedExercise) {
+      // If exercise selected but no sets, go back to exercise picker
+      setSelectedExercise(null);
+      setShowExercisePicker(true);
     } else {
+      // No exercise selected, go back to home
       router.push('/');
     }
   };
@@ -279,13 +281,13 @@ export default function QuickLogPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="mx-4 mt-4 rounded-lg bg-red-900/20 p-4 text-center text-red-400">
-          {error}
+        <div className="mx-4 mt-4 rounded-lg bg-red-900/20 border border-red-800 p-4">
+          <p className="text-sm text-red-400 text-center">{error}</p>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="p-4 space-y-4">
+      {/* Main Content - Mobile First */}
+      <div className="w-full max-w-2xl mx-auto px-4 py-4 space-y-4">
         {!selectedExercise ? (
           // Empty state - show when no exercise selected
           <div className="mt-20 text-center">
@@ -296,7 +298,7 @@ export default function QuickLogPage() {
             <p className="mb-6 text-gray-400">Choose from our catalog of exercises</p>
             <button
               onClick={() => setShowExercisePicker(true)}
-              className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 transition-colors"
+              className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 transition-colors active:scale-95"
             >
               Choose Exercise
             </button>
@@ -306,14 +308,14 @@ export default function QuickLogPage() {
           <>
             {/* Exercise Header */}
             <div className="rounded-lg bg-[#0f1c2e] p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">{selectedExercise.name}</h2>
-                  <p className="text-sm text-gray-400">{selectedExercise.equipment_type}</p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-semibold text-white truncate">{selectedExercise.name}</h2>
+                  <p className="text-sm text-gray-400 capitalize">{selectedExercise.equipment_type}</p>
                 </div>
                 <button
                   onClick={() => setShowExercisePicker(true)}
-                  className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+                  className="flex-shrink-0 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors active:scale-95"
                 >
                   Change
                 </button>
@@ -337,7 +339,7 @@ export default function QuickLogPage() {
               <button
                 onClick={handleFinishWorkout}
                 disabled={loading}
-                className="w-full rounded-lg bg-green-600 py-4 text-lg font-semibold text-white hover:bg-green-700 transition-all disabled:bg-gray-700 disabled:text-gray-400"
+                className="w-full rounded-lg bg-green-600 py-4 text-lg font-semibold text-white hover:bg-green-700 transition-all active:scale-[0.98] disabled:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed"
               >
                 {loading ? 'Finishing...' : `Finish Workout (${sets.length} ${sets.length === 1 ? 'set' : 'sets'})`}
               </button>
