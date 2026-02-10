@@ -3,11 +3,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { Search, X, Dumbbell, AlertCircle } from 'lucide-react';
+import { capitalizeFirst } from '@/lib/utils';
 
 interface Exercise {
   id: string;
   name: string;
-  equipment: string;
+  equipment_type: string;
   category?: string; // Exercise category (push, pull, legs, core, etc.)
   primary_muscles: string[];
   secondary_muscles: string[];
@@ -46,7 +47,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
         // Fetch exercises (including category field)
         const { data: exercisesData, error: exercisesError } = await supabase
           .from('exercises')
-          .select('id, name, equipment, category, primary_muscles, secondary_muscles, is_compound')
+          .select('id, name, equipment_type, category, primary_muscles, secondary_muscles, is_compound')
           .order('name');
 
         if (exercisesError) {
@@ -108,7 +109,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
       filtered = filtered.filter(
         (ex) =>
           ex.name.toLowerCase().includes(query) ||
-          ex.equipment.toLowerCase().includes(query) ||
+          ex.equipment_type.toLowerCase().includes(query) ||
           ex.primary_muscles.some((muscleId) =>
             getMuscleNameById(muscleId).toLowerCase().includes(query)
           )
@@ -250,7 +251,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
                       </div>
                       <div className="ml-3 flex flex-col items-end gap-1">
                         <span className="rounded-full bg-gray-800 px-3 py-1 text-xs font-medium text-gray-300">
-                          {exercise.equipment}
+                          {capitalizeFirst(exercise.equipment_type)}
                         </span>
                         {exercise.is_compound && (
                           <span className="rounded-full bg-blue-900/30 px-3 py-1 text-xs font-medium text-blue-400">
