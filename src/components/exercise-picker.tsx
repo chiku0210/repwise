@@ -8,6 +8,7 @@ interface Exercise {
   id: string;
   name: string;
   equipment: string;
+  category?: string; // Exercise category (push, pull, legs, core, etc.)
   primary_muscles: string[];
   secondary_muscles: string[];
   is_compound: boolean;
@@ -42,15 +43,11 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
       try {
         const supabase = getSupabaseBrowserClient();
 
-        console.log('Fetching exercises and muscles...');
-
-        // Fetch exercises
+        // Fetch exercises (including category field)
         const { data: exercisesData, error: exercisesError } = await supabase
           .from('exercises')
-          .select('id, name, equipment, primary_muscles, secondary_muscles, is_compound')
+          .select('id, name, equipment, category, primary_muscles, secondary_muscles, is_compound')
           .order('name');
-
-        console.log('Exercises response:', { data: exercisesData, error: exercisesError });
 
         if (exercisesError) {
           console.error('Exercise fetch error:', exercisesError);
@@ -69,8 +66,6 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
           .select('id, name, group')
           .order('name');
 
-        console.log('Muscles response:', { data: musclesData, error: musclesError });
-
         if (musclesError) {
           console.error('Muscle fetch error:', musclesError);
           throw new Error(`Failed to fetch muscles: ${musclesError.message}`);
@@ -84,14 +79,6 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
 
         setExercises(exercisesData);
         setMuscles(musclesData);
-        
-        // Log unique muscle groups for debugging
-        const uniqueGroups = [...new Set(musclesData.map(m => m.group))];
-        console.log('Unique muscle groups in database:', uniqueGroups);
-        console.log('Data loaded successfully:', {
-          exerciseCount: exercisesData.length,
-          muscleCount: musclesData.length,
-        });
       } catch (err) {
         console.error('Error fetching data:', err);
         const errorMessage =
@@ -128,9 +115,16 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
       );
     }
 
-    // Filter by muscle group (case-insensitive)
+    // Filter by muscle group
     if (selectedMuscleGroup !== 'All') {
       filtered = filtered.filter((ex) => {
+        // First, try to match by exercise category (direct match)
+        if (ex.category) {
+          const categoryMatch = ex.category.toLowerCase() === selectedMuscleGroup.toLowerCase();
+          if (categoryMatch) return true;
+        }
+
+        // Second, try to match by muscle groups (primary_muscles → muscles.group)
         const primaryMuscleGroups = ex.primary_muscles
           .map((muscleId) => {
             const muscle = muscles.find((m) => m.id === muscleId);
@@ -138,26 +132,12 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
           })
           .filter(Boolean);
 
-        // Case-insensitive comparison
-        const hasMatchingGroup = primaryMuscleGroups.some(
+        return primaryMuscleGroups.some(
           (group) => group?.toLowerCase() === selectedMuscleGroup.toLowerCase()
         );
-
-        // Debug log for first exercise when filter is active
-        if (ex === exercises[0]) {
-          console.log('Filter Debug:', {
-            selectedMuscleGroup,
-            exerciseName: ex.name,
-            primaryMuscleGroups,
-            hasMatch: hasMatchingGroup,
-          });
-        }
-
-        return hasMatchingGroup;
       });
     }
 
-    console.log(`Filtered exercises: ${filtered.length} of ${exercises.length}`);
     return filtered;
   }, [exercises, muscles, searchQuery, selectedMuscleGroup]);
 
@@ -246,11 +226,6 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
               <Dumbbell className="mx-auto mb-3 h-12 w-12 opacity-50" />
               <p>No exercises found</p>
               <p className="mt-1 text-sm">Try adjusting your search or filters</p>
-              {selectedMuscleGroup !== 'All' && (
-                <p className="mt-2 text-xs text-gray-500">
-                  Check console for filter debug info
-                </p>
-              )}
             </div>
           ) : (
             <div className="space-y-2">
