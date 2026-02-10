@@ -11,7 +11,7 @@ import { ArrowLeft, Plus, CheckCircle2 } from 'lucide-react';
 interface Exercise {
   id: string;
   name: string;
-  equipment: string;
+  equipment_type: string;
   primary_muscles: string[];
   secondary_muscles: string[];
   is_compound: boolean;
@@ -309,7 +309,7 @@ export default function QuickLogPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-white">{selectedExercise.name}</h2>
-                  <p className="text-sm text-gray-400">{selectedExercise.equipment}</p>
+                  <p className="text-sm text-gray-400">{selectedExercise.equipment_type}</p>
                 </div>
                 <button
                   onClick={() => setShowExercisePicker(true)}

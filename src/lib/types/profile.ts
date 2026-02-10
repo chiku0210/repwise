@@ -52,6 +52,7 @@ export interface Exercise {
   category: 'push' | 'pull' | 'legs' | 'core' | 'cardio' | 'other';
   muscle_groups: string[];
   equipment: string[];
+  equipment_type: string;
   is_compound: boolean;
 }
 
