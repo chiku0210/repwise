@@ -16,7 +16,7 @@ interface Exercise {
 interface Muscle {
   id: string;
   name: string;
-  muscle_group: string;
+  group: string; // Changed from muscle_group to group
 }
 
 interface ExercisePickerProps {
@@ -63,10 +63,10 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
           );
         }
 
-        // Fetch muscles
+        // Fetch muscles (using 'group' column, not 'muscle_group')
         const { data: musclesData, error: musclesError } = await supabase
           .from('muscles')
-          .select('id, name, muscle_group')
+          .select('id, name, group')
           .order('name');
 
         console.log('Muscles response:', { data: musclesData, error: musclesError });
@@ -128,7 +128,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
     if (selectedMuscleGroup !== 'All') {
       filtered = filtered.filter((ex) => {
         const primaryMuscleGroups = ex.primary_muscles
-          .map((muscleId) => muscles.find((m) => m.id === muscleId)?.muscle_group)
+          .map((muscleId) => muscles.find((m) => m.id === muscleId)?.group) // Changed from muscle_group to group
           .filter(Boolean);
 
         return primaryMuscleGroups.includes(selectedMuscleGroup);
