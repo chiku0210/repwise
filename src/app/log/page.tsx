@@ -5,6 +5,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { calculateDuration } from '@/lib/utils';
 import WorkoutCard from '@/components/workout-card';
 import EmptyWorkoutState from '@/components/empty-workout-state';
+import { BottomNav } from '@/components/ui/bottom-nav';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 // Constants
@@ -221,7 +222,7 @@ export default function LogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1628] pb-24">
+    <div className="flex min-h-screen flex-col bg-[#0a1628]">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-gray-800 bg-[#0f1c2e]/95 backdrop-blur-sm">
         <div className="flex items-center justify-between p-4">
@@ -230,47 +231,52 @@ export default function LogPage() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-2xl px-4 py-6">
-        {workouts.length === 0 ? (
-          <EmptyWorkoutState />
-        ) : (
-          <>
-            {/* Workout List */}
-            <div className="space-y-3">
-              {workouts.map((workout) => (
-                <WorkoutCard key={workout.id} workout={workout} />
-              ))}
-            </div>
-
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="mt-6 text-center">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="rounded-lg bg-gray-800 px-6 py-3 font-semibold text-white hover:bg-gray-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loadingMore ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading...
-                    </span>
-                  ) : (
-                    'Load More'
-                  )}
-                </button>
+      <main className="flex-1 pb-24">
+        <div className="mx-auto max-w-2xl px-4 py-6">
+          {workouts.length === 0 ? (
+            <EmptyWorkoutState />
+          ) : (
+            <>
+              {/* Workout List */}
+              <div className="space-y-3">
+                {workouts.map((workout) => (
+                  <WorkoutCard key={workout.id} workout={workout} />
+                ))}
               </div>
-            )}
 
-            {/* End of List Message */}
-            {!hasMore && workouts.length > 0 && (
-              <div className="mt-6 text-center text-sm text-gray-500">
-                You've reached the end of your workout history
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="rounded-lg bg-gray-800 px-6 py-3 font-semibold text-white hover:bg-gray-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingMore ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading...
+                      </span>
+                    ) : (
+                      'Load More'
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* End of List Message */}
+              {!hasMore && workouts.length > 0 && (
+                <div className="mt-6 text-center text-sm text-gray-500">
+                  You've reached the end of your workout history
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </main>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }
