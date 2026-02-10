@@ -75,24 +75,28 @@ export default function QuickLogPage() {
         return null;
       }
 
-      // Create workout session
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('workout_sessions')
-        .insert({
-          user_id: user.id,
-          started_at: new Date().toISOString(),
-          workout_name: 'Quick Log',
-        })
-        .select('id')
-        .single();
+      // Create workout session if it doesn't exist
+      let sessionId = workoutSessionId;
+      if (!sessionId) {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('workout_sessions')
+          .insert({
+            user_id: user.id,
+            started_at: new Date().toISOString(),
+            workout_name: 'Quick Log',
+          })
+          .select('id')
+          .single();
 
-      if (sessionError) throw sessionError;
+        if (sessionError) throw sessionError;
+        sessionId = sessionData.id;
+      }
 
-      // Create workout_exercise record
+      // Create workout_exercise record for the new exercise
       const { data: workoutExData, error: workoutExError } = await supabase
         .from('workout_exercises')
         .insert({
-          workout_id: sessionData.id,
+          workout_id: sessionId,
           exercise_id: exerciseId,
           order_index: 1,
           target_sets: DEFAULT_TARGET_SETS,
@@ -103,7 +107,7 @@ export default function QuickLogPage() {
       if (workoutExError) throw workoutExError;
 
       return {
-        sessionId: sessionData.id,
+        sessionId: sessionId,
         workoutExerciseId: workoutExData.id,
       };
     } catch (err) {
@@ -282,6 +286,26 @@ export default function QuickLogPage() {
     }
   };
 
+  // Handle "Change" button click
+  const handleChangeExercise = () => {
+    if (sets.length > 0) {
+      // If sets exist, warn user they must finish current exercise first
+      setConfirmDialog({
+        show: true,
+        title: 'Finish Current Exercise?',
+        message: `You have ${sets.length} set${sets.length > 1 ? 's' : ''} logged for ${selectedExercise?.name}. Please finish this workout before changing exercises.`,
+        onConfirm: () => {
+          setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+        },
+      });
+    } else {
+      // No sets logged, safe to change exercise
+      // Reset workout_exercise_id so new exercise creates a new one
+      setWorkoutExerciseId(null);
+      setShowExercisePicker(true);
+    }
+  };
+
   const handleBackClick = () => {
     if (sets.length > 0) {
       // If sets are logged, show custom confirmation
@@ -297,6 +321,7 @@ export default function QuickLogPage() {
     } else if (selectedExercise) {
       // If exercise selected but no sets, go back to exercise picker
       setSelectedExercise(null);
+      setWorkoutExerciseId(null);
       setShowExercisePicker(true);
     } else {
       // No exercise selected, go back to home
@@ -371,7 +396,7 @@ export default function QuickLogPage() {
                   <p className="text-sm text-gray-400 capitalize">{selectedExercise.equipment_type}</p>
                 </div>
                 <button
-                  onClick={() => setShowExercisePicker(true)}
+                  onClick={handleChangeExercise}
                   className="flex-shrink-0 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors active:scale-95"
                 >
                   Change
