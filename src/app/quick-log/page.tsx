@@ -92,6 +92,11 @@ export default function QuickLogPage() {
         sessionId = sessionData.id;
       }
 
+      // Type guard to ensure sessionId is not null
+      if (!sessionId) {
+        throw new Error('Failed to create or retrieve workout session');
+      }
+
       // Create workout_exercise record for the new exercise
       const { data: workoutExData, error: workoutExError } = await supabase
         .from('workout_exercises')
