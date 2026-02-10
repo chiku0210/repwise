@@ -1,12 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ExercisePicker from '@/components/exercise-picker';
 import SetForm from '@/components/set-form';
 import SetList from '@/components/set-list';
+import ConfirmDialog from '@/components/confirm-dialog';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { ArrowLeft, Plus, CheckCircle2 } from 'lucide-react';
+
+// Constants
+const DEFAULT_TARGET_SETS = 3;
+const SUCCESS_REDIRECT_DELAY_MS = 1500;
 
 interface Exercise {
   id: string;
@@ -27,6 +32,8 @@ interface WorkoutSet {
 
 export default function QuickLogPage() {
   const router = useRouter();
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const [showExercisePicker, setShowExercisePicker] = useState(true);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [sets, setSets] = useState<WorkoutSet[]>([]);
@@ -35,6 +42,23 @@ export default function QuickLogPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ show: false, title: '', message: '', onConfirm: () => {} });
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Create workout session and workout_exercise record on first set
   const createWorkoutSession = async (
@@ -71,7 +95,7 @@ export default function QuickLogPage() {
           workout_id: sessionData.id,
           exercise_id: exerciseId,
           order_index: 1,
-          target_sets: 3, // Default
+          target_sets: DEFAULT_TARGET_SETS,
         })
         .select('id')
         .single();
@@ -151,28 +175,51 @@ export default function QuickLogPage() {
   // Delete a set
   const handleDeleteSet = async (setId: string) => {
     if (typeof window === 'undefined') return;
-    if (!confirm('Delete this set?')) return;
 
-    try {
-      const supabase = getSupabaseBrowserClient();
+    // Show custom confirmation dialog
+    setConfirmDialog({
+      show: true,
+      title: 'Delete Set',
+      message: 'Are you sure you want to delete this set?',
+      onConfirm: async () => {
+        try {
+          const supabase = getSupabaseBrowserClient();
 
-      const { error: deleteError } = await supabase
-        .from('exercise_sets')
-        .delete()
-        .eq('id', setId);
+          // Delete the set from database
+          const { error: deleteError } = await supabase
+            .from('exercise_sets')
+            .delete()
+            .eq('id', setId);
 
-      if (deleteError) throw deleteError;
+          if (deleteError) throw deleteError;
 
-      // Update local state and renumber sets
-      const updatedSets = sets
-        .filter((s) => s.id !== setId)
-        .map((s, index) => ({ ...s, set_number: index + 1 }));
+          // Update local state and renumber sets
+          const updatedSets = sets
+            .filter((s) => s.id !== setId)
+            .map((s, index) => ({ ...s, set_number: index + 1 }));
 
-      setSets(updatedSets);
-    } catch (err) {
-      console.error('Error deleting set:', err);
-      setError('Failed to delete set. Please try again.');
-    }
+          // Update set numbers in database for remaining sets
+          for (const set of updatedSets) {
+            const { error: updateError } = await supabase
+              .from('exercise_sets')
+              .update({ set_number: set.set_number })
+              .eq('id', set.id);
+
+            if (updateError) {
+              console.error('Error updating set number:', updateError);
+              throw updateError;
+            }
+          }
+
+          setSets(updatedSets);
+        } catch (err) {
+          console.error('Error deleting set:', err);
+          setError('Failed to delete set. Please try again.');
+        } finally {
+          setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+        }
+      },
+    });
   };
 
   // Finish workout
@@ -205,10 +252,10 @@ export default function QuickLogPage() {
       // Show success state
       setSuccess(true);
 
-      // Redirect to log tab after brief delay
-      setTimeout(() => {
+      // Redirect to log tab after brief delay (with cleanup)
+      redirectTimeoutRef.current = setTimeout(() => {
         router.push('/log');
-      }, 1500);
+      }, SUCCESS_REDIRECT_DELAY_MS);
     } catch (err) {
       console.error('Error finishing workout:', err);
       setError('Failed to finish workout. Please try again.');
@@ -217,8 +264,12 @@ export default function QuickLogPage() {
   };
 
   const handleExerciseSelect = (exercise: Exercise) => {
+    // Use callback to ensure state is updated before closing
     setSelectedExercise(exercise);
-    setShowExercisePicker(false);
+    // Slight delay to ensure state update completes
+    setTimeout(() => {
+      setShowExercisePicker(false);
+    }, 0);
   };
 
   const handlePickerClose = () => {
@@ -233,10 +284,16 @@ export default function QuickLogPage() {
 
   const handleBackClick = () => {
     if (sets.length > 0) {
-      // If sets are logged, confirm before leaving
-      if (confirm('You have unsaved sets. Are you sure you want to leave?')) {
-        router.push('/');
-      }
+      // If sets are logged, show custom confirmation
+      setConfirmDialog({
+        show: true,
+        title: 'Leave Workout?',
+        message: 'You have unsaved sets. Are you sure you want to leave?',
+        onConfirm: () => {
+          setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+          router.push('/');
+        },
+      });
     } else if (selectedExercise) {
       // If exercise selected but no sets, go back to exercise picker
       setSelectedExercise(null);
@@ -355,6 +412,15 @@ export default function QuickLogPage() {
           onClose={handlePickerClose}
         />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        show={confirmDialog.show}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} })}
+      />
     </div>
   );
 }
