@@ -31,7 +31,8 @@ interface WorkoutWithDetails {
   }[];
 }
 
-interface WorkoutExercise {
+// Supabase response types
+interface SupabaseWorkoutExercise {
   id: string;
   order_index: number;
   exercises: {
@@ -49,7 +50,7 @@ interface WorkoutExercise {
   }[];
 }
 
-interface WorkoutSession {
+interface SupabaseWorkoutSession {
   id: string;
   workout_name: string;
   started_at: string;
@@ -57,7 +58,7 @@ interface WorkoutSession {
   total_sets: number;
   total_reps: number;
   total_volume_kg: number;
-  workout_exercises: WorkoutExercise[];
+  workout_exercises: SupabaseWorkoutExercise[];
 }
 
 export default function LogPage() {
@@ -69,7 +70,7 @@ export default function LogPage() {
   const [hasMore, setHasMore] = useState(true);
 
   // Transform raw Supabase data to WorkoutWithDetails format
-  const transformWorkoutData = (session: WorkoutSession): WorkoutWithDetails => {
+  const transformWorkoutData = (session: SupabaseWorkoutSession): WorkoutWithDetails => {
     const exercises = session.workout_exercises
       .sort((a, b) => a.order_index - b.order_index)
       .map((workoutEx) => ({
@@ -151,7 +152,9 @@ export default function LogPage() {
       if (fetchError) throw fetchError;
 
       // Transform data
-      const transformedWorkouts = (sessions as WorkoutSession[] || []).map(transformWorkoutData);
+      const transformedWorkouts = (sessions || []).map((session) => 
+        transformWorkoutData(session as SupabaseWorkoutSession)
+      );
 
       // Check if there are more workouts to load
       if (transformedWorkouts.length < WORKOUTS_PER_PAGE) {
