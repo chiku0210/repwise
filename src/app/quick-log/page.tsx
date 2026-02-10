@@ -226,7 +226,39 @@ export default function QuickLogPage() {
     });
   };
 
-  // Finish workout
+  // Finish current exercise (save to database)
+  const finishCurrentExercise = async (): Promise<boolean> => {
+    if (!workoutSessionId || sets.length === 0) return false;
+    if (typeof window === 'undefined') return false;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Update workout session with stats (no completed_at yet - workout continues)
+      const totalVolume = sets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
+      const totalReps = sets.reduce((sum, set) => sum + set.reps, 0);
+
+      // Note: We don't set completed_at here because workout continues with new exercise
+      const { error: updateError } = await supabase
+        .from('workout_sessions')
+        .update({
+          total_sets: sets.length,
+          total_reps: totalReps,
+          total_volume_kg: totalVolume,
+        })
+        .eq('id', workoutSessionId);
+
+      if (updateError) throw updateError;
+
+      return true;
+    } catch (err) {
+      console.error('Error finishing exercise:', err);
+      setError('Failed to save exercise. Please try again.');
+      return false;
+    }
+  };
+
+  // Finish entire workout (final save with completed_at)
   const handleFinishWorkout = async () => {
     if (!workoutSessionId || sets.length === 0) return;
     if (typeof window === 'undefined') return;
@@ -289,18 +321,31 @@ export default function QuickLogPage() {
   // Handle "Change" button click
   const handleChangeExercise = () => {
     if (sets.length > 0) {
-      // If sets exist, warn user they must finish current exercise first
+      // If sets exist, confirm and auto-finish current exercise
       setConfirmDialog({
         show: true,
         title: 'Finish Current Exercise?',
-        message: `You have ${sets.length} set${sets.length > 1 ? 's' : ''} logged for ${selectedExercise?.name}. Please finish this workout before changing exercises.`,
-        onConfirm: () => {
+        message: `You have ${sets.length} set${sets.length > 1 ? 's' : ''} logged for ${selectedExercise?.name}. This exercise will be saved and you can start a new one.`,
+        onConfirm: async () => {
+          // Close dialog first
           setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+          
+          // Save current exercise to database
+          const saved = await finishCurrentExercise();
+          
+          if (saved) {
+            // Reset state for new exercise
+            setSets([]);
+            setWorkoutExerciseId(null);
+            setSelectedExercise(null);
+            
+            // Open exercise picker for new exercise
+            setShowExercisePicker(true);
+          }
         },
       });
     } else {
       // No sets logged, safe to change exercise
-      // Reset workout_exercise_id so new exercise creates a new one
       setWorkoutExerciseId(null);
       setShowExercisePicker(true);
     }
