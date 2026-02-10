@@ -75,24 +75,33 @@ export default function QuickLogPage() {
         return null;
       }
 
-      // Create workout session
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('workout_sessions')
-        .insert({
-          user_id: user.id,
-          started_at: new Date().toISOString(),
-          workout_name: 'Quick Log',
-        })
-        .select('id')
-        .single();
+      // Create workout session if it doesn't exist
+      let sessionId = workoutSessionId;
+      if (!sessionId) {
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('workout_sessions')
+          .insert({
+            user_id: user.id,
+            started_at: new Date().toISOString(),
+            workout_name: 'Quick Log',
+          })
+          .select('id')
+          .single();
 
-      if (sessionError) throw sessionError;
+        if (sessionError) throw sessionError;
+        sessionId = sessionData.id;
+      }
 
-      // Create workout_exercise record
+      // Type guard to ensure sessionId is not null
+      if (!sessionId) {
+        throw new Error('Failed to create or retrieve workout session');
+      }
+
+      // Create workout_exercise record for the new exercise
       const { data: workoutExData, error: workoutExError } = await supabase
         .from('workout_exercises')
         .insert({
-          workout_id: sessionData.id,
+          workout_id: sessionId,
           exercise_id: exerciseId,
           order_index: 1,
           target_sets: DEFAULT_TARGET_SETS,
@@ -103,7 +112,7 @@ export default function QuickLogPage() {
       if (workoutExError) throw workoutExError;
 
       return {
-        sessionId: sessionData.id,
+        sessionId: sessionId,
         workoutExerciseId: workoutExData.id,
       };
     } catch (err) {
@@ -222,7 +231,39 @@ export default function QuickLogPage() {
     });
   };
 
-  // Finish workout
+  // Finish current exercise (save to database)
+  const finishCurrentExercise = async (): Promise<boolean> => {
+    if (!workoutSessionId || sets.length === 0) return false;
+    if (typeof window === 'undefined') return false;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Update workout session with stats (no completed_at yet - workout continues)
+      const totalVolume = sets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
+      const totalReps = sets.reduce((sum, set) => sum + set.reps, 0);
+
+      // Note: We don't set completed_at here because workout continues with new exercise
+      const { error: updateError } = await supabase
+        .from('workout_sessions')
+        .update({
+          total_sets: sets.length,
+          total_reps: totalReps,
+          total_volume_kg: totalVolume,
+        })
+        .eq('id', workoutSessionId);
+
+      if (updateError) throw updateError;
+
+      return true;
+    } catch (err) {
+      console.error('Error finishing exercise:', err);
+      setError('Failed to save exercise. Please try again.');
+      return false;
+    }
+  };
+
+  // Finish entire workout (final save with completed_at)
   const handleFinishWorkout = async () => {
     if (!workoutSessionId || sets.length === 0) return;
     if (typeof window === 'undefined') return;
@@ -282,6 +323,39 @@ export default function QuickLogPage() {
     }
   };
 
+  // Handle "Change" button click
+  const handleChangeExercise = () => {
+    if (sets.length > 0) {
+      // If sets exist, confirm and auto-finish current exercise
+      setConfirmDialog({
+        show: true,
+        title: 'Finish Current Exercise?',
+        message: `You have ${sets.length} set${sets.length > 1 ? 's' : ''} logged for ${selectedExercise?.name}. This exercise will be saved and you can start a new one.`,
+        onConfirm: async () => {
+          // Close dialog first
+          setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+          
+          // Save current exercise to database
+          const saved = await finishCurrentExercise();
+          
+          if (saved) {
+            // Reset state for new exercise
+            setSets([]);
+            setWorkoutExerciseId(null);
+            setSelectedExercise(null);
+            
+            // Open exercise picker for new exercise
+            setShowExercisePicker(true);
+          }
+        },
+      });
+    } else {
+      // No sets logged, safe to change exercise
+      setWorkoutExerciseId(null);
+      setShowExercisePicker(true);
+    }
+  };
+
   const handleBackClick = () => {
     if (sets.length > 0) {
       // If sets are logged, show custom confirmation
@@ -297,6 +371,7 @@ export default function QuickLogPage() {
     } else if (selectedExercise) {
       // If exercise selected but no sets, go back to exercise picker
       setSelectedExercise(null);
+      setWorkoutExerciseId(null);
       setShowExercisePicker(true);
     } else {
       // No exercise selected, go back to home
@@ -371,7 +446,7 @@ export default function QuickLogPage() {
                   <p className="text-sm text-gray-400 capitalize">{selectedExercise.equipment_type}</p>
                 </div>
                 <button
-                  onClick={() => setShowExercisePicker(true)}
+                  onClick={handleChangeExercise}
                   className="flex-shrink-0 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors active:scale-95"
                 >
                   Change
