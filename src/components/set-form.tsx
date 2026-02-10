@@ -3,6 +3,14 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
+// Validation constants
+const MAX_WEIGHT_KG = 500;
+const MAX_REPS = 100;
+const DEFAULT_RPE = 7;
+const MIN_RPE = 1;
+const MAX_RPE = 10;
+const RPE_STEP = 0.5;
+
 interface SetFormProps {
   onSubmit: (data: { weight_kg: number; reps: number; rpe: number }) => Promise<void>;
   setNumber: number;
@@ -12,7 +20,7 @@ interface SetFormProps {
 export default function SetForm({ onSubmit, setNumber, loading }: SetFormProps) {
   const [weight, setWeight] = useState<string>('');
   const [reps, setReps] = useState<string>('');
-  const [rpe, setRpe] = useState<string>('7');
+  const [rpe, setRpe] = useState<number>(DEFAULT_RPE);
   const [errors, setErrors] = useState<{ weight?: string; reps?: string }>({});
 
   const validateForm = (): boolean => {
@@ -22,16 +30,16 @@ export default function SetForm({ onSubmit, setNumber, loading }: SetFormProps) 
     const weightNum = parseFloat(weight);
     if (!weight || isNaN(weightNum) || weightNum <= 0) {
       newErrors.weight = 'Enter valid weight';
-    } else if (weightNum > 500) {
-      newErrors.weight = 'Weight seems too high';
+    } else if (weightNum > MAX_WEIGHT_KG) {
+      newErrors.weight = `Weight must be under ${MAX_WEIGHT_KG}kg`;
     }
 
     // Validate reps
     const repsNum = parseInt(reps);
     if (!reps || isNaN(repsNum) || repsNum <= 0) {
       newErrors.reps = 'Enter valid reps';
-    } else if (repsNum > 100) {
-      newErrors.reps = 'Reps seem too high';
+    } else if (repsNum > MAX_REPS) {
+      newErrors.reps = `Reps must be under ${MAX_REPS}`;
     }
 
     setErrors(newErrors);
@@ -45,12 +53,11 @@ export default function SetForm({ onSubmit, setNumber, loading }: SetFormProps) 
 
     const weightNum = parseFloat(weight);
     const repsNum = parseInt(reps);
-    const rpeNum = parseInt(rpe);
 
     await onSubmit({
       weight_kg: weightNum,
       reps: repsNum,
-      rpe: rpeNum,
+      rpe: rpe,
     });
 
     // Clear form after successful submit
@@ -122,18 +129,18 @@ export default function SetForm({ onSubmit, setNumber, loading }: SetFormProps) 
         <input
           id="rpe"
           type="range"
-          min="1"
-          max="10"
-          step="0.5"
+          min={MIN_RPE}
+          max={MAX_RPE}
+          step={RPE_STEP}
           value={rpe}
-          onChange={(e) => setRpe(e.target.value)}
+          onChange={(e) => setRpe(parseFloat(e.target.value))}
           disabled={loading}
           className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500 disabled:opacity-50"
         />
         <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>1 - Easy</span>
+          <span>{MIN_RPE} - Easy</span>
           <span>5 - Moderate</span>
-          <span>10 - Max</span>
+          <span>{MAX_RPE} - Max</span>
         </div>
       </div>
 
