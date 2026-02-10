@@ -10,6 +10,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 // Constants
 const WORKOUTS_PER_PAGE = 10;
 
+// Final transformed workout interface
 interface WorkoutWithDetails {
   id: string;
   workout_name: string;
@@ -31,8 +32,17 @@ interface WorkoutWithDetails {
   }[];
 }
 
-// Supabase response types
-interface SupabaseWorkoutExercise {
+// Supabase response types (matching actual DB relationships)
+type SupabaseExerciseSet = {
+  id: string;
+  set_number: number;
+  weight_kg: number;
+  reps: number;
+  rpe: number;
+  timestamp: string;
+};
+
+type SupabaseWorkoutExercise = {
   id: string;
   order_index: number;
   exercises: {
@@ -40,17 +50,10 @@ interface SupabaseWorkoutExercise {
     name: string;
     equipment_type: string;
   };
-  exercise_sets: {
-    id: string;
-    set_number: number;
-    weight_kg: number;
-    reps: number;
-    rpe: number;
-    timestamp: string;
-  }[];
-}
+  exercise_sets: SupabaseExerciseSet[];
+};
 
-interface SupabaseWorkoutSession {
+type SupabaseWorkoutSession = {
   id: string;
   workout_name: string;
   started_at: string;
@@ -59,7 +62,7 @@ interface SupabaseWorkoutSession {
   total_reps: number;
   total_volume_kg: number;
   workout_exercises: SupabaseWorkoutExercise[];
-}
+};
 
 export default function LogPage() {
   const [workouts, setWorkouts] = useState<WorkoutWithDetails[]>([]);
@@ -147,14 +150,13 @@ export default function LogPage() {
         .eq('user_id', user.id)
         .not('completed_at', 'is', null)
         .order('completed_at', { ascending: false })
-        .range(startRange, endRange);
+        .range(startRange, endRange)
+        .returns<SupabaseWorkoutSession[]>();
 
       if (fetchError) throw fetchError;
 
       // Transform data
-      const transformedWorkouts = (sessions || []).map((session) => 
-        transformWorkoutData(session as SupabaseWorkoutSession)
-      );
+      const transformedWorkouts = (sessions || []).map(transformWorkoutData);
 
       // Check if there are more workouts to load
       if (transformedWorkouts.length < WORKOUTS_PER_PAGE) {
