@@ -9,7 +9,7 @@ const MAX_REPS = 100;
 const DEFAULT_RPE = 7;
 const MIN_RPE = 1;
 const MAX_RPE = 10;
-const RPE_STEP = 0.5;
+const RPE_STEP = 1;
 
 interface SetFormProps {
   onSubmit: (data: { weight_kg: number; reps: number; rpe: number }) => Promise<void>;
