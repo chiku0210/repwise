@@ -28,7 +28,6 @@ export interface MuscleGroup {
   id: string;
   name: string;
   description: string;
-  // svgComponent will be added later when we integrate anatomy SVGs
 }
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [
@@ -97,3 +96,20 @@ export const MUSCLE_TO_CATEGORY: Record<string, string> = {
   Abs: 'core',
   Core: 'core',
 };
+
+// Equipment type icons/labels - shared across components
+export const EQUIPMENT_ICONS: Record<string, string> = {
+  barbell: '[BAR]',
+  dumbbell: '[DB]',
+  machine: '[MCH]',
+  bodyweight: '[BW]',
+  cable: '[CBL]',
+  other: '[EQP]',
+};
+
+// Placeholder constants for UI
+export const IMG_PLACEHOLDER = '[IMG]';
+export const ICON_PLACEHOLDER = '[•]';
+
+// UI Constants
+export const SKELETON_COUNT = 3;

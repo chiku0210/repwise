@@ -1,21 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { Exercise } from '@/lib/types/exercise';
+import { Exercise, EQUIPMENT_ICONS } from '@/lib/types/exercise';
 
 interface ExerciseCardProps {
   exercise: Exercise;
-  primaryMuscleNames?: string[];
+  primaryMuscleNames: string[]; // Required - not optional
 }
-
-const EQUIPMENT_ICONS: Record<string, string> = {
-  barbell: '🏋️',
-  dumbbell: '💪',
-  machine: '⚙️',
-  bodyweight: '🧘',
-  cable: '🔗',
-  other: '🎯',
-};
 
 export function ExerciseCard({ exercise, primaryMuscleNames }: ExerciseCardProps) {
   return (
@@ -26,18 +17,25 @@ export function ExerciseCard({ exercise, primaryMuscleNames }: ExerciseCardProps
             <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">
               {exercise.name}
             </h3>
-            {primaryMuscleNames && primaryMuscleNames.length > 0 && (
+            {primaryMuscleNames.length > 0 && (
               <p className="mt-1 text-sm text-gray-400">
                 {primaryMuscleNames.join(', ')}
               </p>
             )}
           </div>
           <div className="ml-3 flex items-center gap-2">
-            <span className="text-2xl" title={exercise.equipment_type}>
+            <span 
+              className="text-xs font-mono text-gray-400" 
+              title={exercise.equipment_type}
+              aria-label={`Equipment: ${exercise.equipment_type}`}
+            >
               {EQUIPMENT_ICONS[exercise.equipment_type] || EQUIPMENT_ICONS.other}
             </span>
             {exercise.is_compound && (
-              <span className="rounded bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
+              <span 
+                className="rounded bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400"
+                aria-label="Compound exercise"
+              >
                 Compound
               </span>
             )}
