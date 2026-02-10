@@ -1,12 +1,15 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { BottomNav } from '@/components/ui/bottom-nav';
 import { Button } from '@/components/ui/button';
 import { AuthGate } from '@/components/AuthGate';
 import { useAuth } from '@/hooks/useAuth';
+import { Dumbbell, Zap } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
 
   return (
     <AuthGate>
@@ -23,10 +26,22 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-4">
-              <Button size="lg" className="h-14 w-full text-lg">
+              <Button 
+                size="lg" 
+                className="h-14 w-full text-lg"
+                disabled
+              >
+                <Dumbbell className="mr-2 h-5 w-5" />
                 Start Workout
+                <span className="ml-2 rounded-full bg-gray-700 px-2 py-0.5 text-xs">Soon</span>
               </Button>
-              <Button variant="outline" size="lg" className="h-14 w-full text-lg">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-14 w-full text-lg border-blue-600 text-blue-400 hover:bg-blue-900/20"
+                onClick={() => router.push('/quick-log')}
+              >
+                <Zap className="mr-2 h-5 w-5" />
                 Quick Log
               </Button>
             </div>
