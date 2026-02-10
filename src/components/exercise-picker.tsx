@@ -1,0 +1,221 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
+import { Search, X, Dumbbell } from 'lucide-react';
+
+interface Exercise {
+  id: string;
+  name: string;
+  equipment: string;
+  primary_muscles: string[];
+  secondary_muscles: string[];
+  is_compound: boolean;
+}
+
+interface Muscle {
+  id: string;
+  name: string;
+  muscle_group: string;
+}
+
+interface ExercisePickerProps {
+  onSelect: (exercise: Exercise) => void;
+  onClose: () => void;
+}
+
+const MUSCLE_GROUPS = ['Push', 'Pull', 'Legs', 'Core', 'All'];
+
+export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProps) {
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [muscles, setMuscles] = useState<Muscle[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string>('All');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch exercises and muscles on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    async function fetchData() {
+      try {
+        const supabase = getSupabaseBrowserClient();
+
+        // Fetch exercises
+        const { data: exercisesData, error: exercisesError } = await supabase
+          .from('exercises')
+          .select('id, name, equipment, primary_muscles, secondary_muscles, is_compound')
+          .order('name');
+
+        if (exercisesError) throw exercisesError;
+
+        // Fetch muscles
+        const { data: musclesData, error: musclesError } = await supabase
+          .from('muscles')
+          .select('id, name, muscle_group')
+          .order('name');
+
+        if (musclesError) throw musclesError;
+
+        setExercises(exercisesData || []);
+        setMuscles(musclesData || []);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load exercises. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  // Get muscle name by ID
+  const getMuscleNameById = (muscleId: string): string => {
+    const muscle = muscles.find((m) => m.id === muscleId);
+    return muscle?.name || '';
+  };
+
+  // Filter exercises by search and muscle group
+  const filteredExercises = useMemo(() => {
+    let filtered = exercises;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (ex) =>
+          ex.name.toLowerCase().includes(query) ||
+          ex.equipment.toLowerCase().includes(query) ||
+          ex.primary_muscles.some((muscleId) =>
+            getMuscleNameById(muscleId).toLowerCase().includes(query)
+          )
+      );
+    }
+
+    // Filter by muscle group
+    if (selectedMuscleGroup !== 'All') {
+      filtered = filtered.filter((ex) => {
+        const primaryMuscleGroups = ex.primary_muscles
+          .map((muscleId) => muscles.find((m) => m.id === muscleId)?.muscle_group)
+          .filter(Boolean);
+
+        return primaryMuscleGroups.includes(selectedMuscleGroup);
+      });
+    }
+
+    return filtered;
+  }, [exercises, muscles, searchQuery, selectedMuscleGroup]);
+
+  const handleExerciseSelect = (exercise: Exercise) => {
+    onSelect(exercise);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-2xl rounded-t-2xl bg-[#0f1c2e] sm:rounded-2xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-700 p-4">
+          <h2 className="text-xl font-bold text-white">Select Exercise</h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Search Bar */}
+        <div className="border-b border-gray-700 p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search exercises..."
+              className="w-full rounded-lg bg-[#0a1628] py-3 pl-10 pr-4 text-white placeholder-gray-400 outline-none ring-1 ring-gray-700 focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Muscle Group Filter */}
+        <div className="border-b border-gray-700 p-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {MUSCLE_GROUPS.map((group) => (
+              <button
+                key={group}
+                onClick={() => setSelectedMuscleGroup(group)}
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                  selectedMuscleGroup === group
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                }`}
+              >
+                {group}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Exercise List */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+            </div>
+          ) : error ? (
+            <div className="rounded-lg bg-red-900/20 p-4 text-center text-red-400">
+              {error}
+            </div>
+          ) : filteredExercises.length === 0 ? (
+            <div className="py-12 text-center text-gray-400">
+              <Dumbbell className="mx-auto mb-3 h-12 w-12 opacity-50" />
+              <p>No exercises found</p>
+              <p className="mt-1 text-sm">Try adjusting your search or filters</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredExercises.map((exercise) => {
+                const primaryMuscleNames = exercise.primary_muscles
+                  .map(getMuscleNameById)
+                  .filter(Boolean)
+                  .join(', ');
+
+                return (
+                  <button
+                    key={exercise.id}
+                    onClick={() => handleExerciseSelect(exercise)}
+                    className="w-full rounded-lg bg-[#0a1628] p-4 text-left transition-all hover:bg-[#152235] hover:ring-2 hover:ring-blue-500 active:scale-[0.98]"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white">{exercise.name}</h3>
+                        <p className="mt-1 text-sm text-gray-400">
+                          {primaryMuscleNames}
+                        </p>
+                      </div>
+                      <div className="ml-3 flex flex-col items-end gap-1">
+                        <span className="rounded-full bg-gray-800 px-3 py-1 text-xs font-medium text-gray-300">
+                          {exercise.equipment}
+                        </span>
+                        {exercise.is_compound && (
+                          <span className="rounded-full bg-blue-900/30 px-3 py-1 text-xs font-medium text-blue-400">
+                            Compound
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
