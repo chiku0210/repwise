@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
-import { Search, X, Dumbbell, AlertCircle } from 'lucide-react';
+import { Search, X, Dumbbell, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { capitalizeFirst } from '@/lib/utils';
 
 interface Exercise {
@@ -35,6 +35,7 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string>('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
   // Fetch exercises and muscles on mount
   useEffect(() => {
@@ -93,11 +94,14 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
     fetchData();
   }, []);
 
-  // Get muscle name by ID
-  const getMuscleNameById = (muscleId: string): string => {
-    const muscle = muscles.find((m) => m.id === muscleId);
-    return muscle?.name || '';
-  };
+  // Get muscle name by ID - memoized with useCallback
+  const getMuscleNameById = useCallback(
+    (muscleId: string): string => {
+      const muscle = muscles.find((m) => m.id === muscleId);
+      return muscle?.name || '';
+    },
+    [muscles]
+  );
 
   // Filter exercises by search and muscle group
   const filteredExercises = useMemo(() => {
@@ -140,10 +144,16 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
     }
 
     return filtered;
-  }, [exercises, muscles, searchQuery, selectedMuscleGroup]);
+  }, [exercises, muscles, searchQuery, selectedMuscleGroup, getMuscleNameById]);
 
   const handleExerciseSelect = (exercise: Exercise) => {
-    onSelect(exercise);
+    // Show selection feedback
+    setSelectedExercise(exercise);
+    
+    // Brief delay to show feedback, then close
+    setTimeout(() => {
+      onSelect(exercise);
+    }, 300);
   };
 
   return (
@@ -235,15 +245,27 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
                   .filter(Boolean)
                   .join(', ');
 
+                const isSelected = selectedExercise?.id === exercise.id;
+
                 return (
                   <button
                     key={exercise.id}
                     onClick={() => handleExerciseSelect(exercise)}
-                    className="w-full rounded-lg bg-[#0a1628] p-4 text-left transition-all hover:bg-[#152235] hover:ring-2 hover:ring-blue-500 active:scale-[0.98]"
+                    disabled={!!selectedExercise}
+                    className={`w-full rounded-lg p-4 text-left transition-all hover:bg-[#152235] active:scale-[0.98] disabled:cursor-not-allowed ${
+                      isSelected
+                        ? 'bg-green-900/30 ring-2 ring-green-500'
+                        : 'bg-[#0a1628] hover:ring-2 hover:ring-blue-500'
+                    }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-white">{exercise.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-white">{exercise.name}</h3>
+                          {isSelected && (
+                            <CheckCircle2 className="h-5 w-5 text-green-400 animate-in fade-in zoom-in" />
+                          )}
+                        </div>
                         <p className="mt-1 text-sm text-gray-400">
                           {primaryMuscleNames || 'No muscle data'}
                         </p>
