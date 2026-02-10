@@ -1,213 +1,151 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Check } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface SetFormProps {
-  onSubmit: (set: { weight_kg: number; reps: number; rpe: number }) => void;
+  onSubmit: (data: { weight_kg: number; reps: number; rpe: number }) => Promise<void>;
   setNumber: number;
-  loading?: boolean;
+  loading: boolean;
 }
 
-export default function SetForm({ onSubmit, setNumber, loading = false }: SetFormProps) {
+export default function SetForm({ onSubmit, setNumber, loading }: SetFormProps) {
   const [weight, setWeight] = useState<string>('');
   const [reps, setReps] = useState<string>('');
-  const [rpe, setRpe] = useState<string>('');
-  const [errors, setErrors] = useState<{
-    weight?: string;
-    reps?: string;
-    rpe?: string;
-  }>({});
+  const [rpe, setRpe] = useState<string>('7');
+  const [errors, setErrors] = useState<{ weight?: string; reps?: string }>({});
 
-  const validateInputs = (): boolean => {
-    const newErrors: typeof errors = {};
+  const validateForm = (): boolean => {
+    const newErrors: { weight?: string; reps?: string } = {};
 
-    // Weight validation
+    // Validate weight
     const weightNum = parseFloat(weight);
     if (!weight || isNaN(weightNum) || weightNum <= 0) {
-      newErrors.weight = 'Weight must be greater than 0';
+      newErrors.weight = 'Enter valid weight';
+    } else if (weightNum > 500) {
+      newErrors.weight = 'Weight seems too high';
     }
 
-    // Reps validation
-    const repsNum = parseInt(reps, 10);
-    if (!reps || isNaN(repsNum) || repsNum <= 0 || !Number.isInteger(repsNum)) {
-      newErrors.reps = 'Reps must be a positive integer';
-    }
-
-    // RPE validation
-    const rpeNum = parseInt(rpe, 10);
-    if (!rpe || isNaN(rpeNum) || rpeNum < 1 || rpeNum > 10 || !Number.isInteger(rpeNum)) {
-      newErrors.rpe = 'RPE must be between 1 and 10';
+    // Validate reps
+    const repsNum = parseInt(reps);
+    if (!reps || isNaN(repsNum) || repsNum <= 0) {
+      newErrors.reps = 'Enter valid reps';
+    } else if (repsNum > 100) {
+      newErrors.reps = 'Reps seem too high';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validateInputs()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    onSubmit({
-      weight_kg: parseFloat(weight),
-      reps: parseInt(reps, 10),
-      rpe: parseInt(rpe, 10),
+    if (!validateForm()) return;
+
+    const weightNum = parseFloat(weight);
+    const repsNum = parseInt(reps);
+    const rpeNum = parseInt(rpe);
+
+    await onSubmit({
+      weight_kg: weightNum,
+      reps: repsNum,
+      rpe: rpeNum,
     });
 
-    // Reset form
-    setWeight('');
+    // Clear form after successful submit
+    // Keep weight and RPE, clear reps
     setReps('');
-    setRpe('');
-    setErrors({});
   };
-
-  const handleKeyPress = (e: React.KeyboardEvent, field: 'weight' | 'reps' | 'rpe') => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      // Auto-focus next field or submit
-      if (field === 'weight' && reps === '') {
-        document.getElementById('reps-input')?.focus();
-      } else if (field === 'reps' && rpe === '') {
-        document.getElementById('rpe-input')?.focus();
-      } else if (field === 'rpe' || (weight && reps && rpe)) {
-        handleSubmit();
-      }
-    }
-  };
-
-  const isFormValid = weight && reps && rpe;
 
   return (
-    <div className="rounded-lg bg-[#0f1c2e] p-6">
-      {/* Set Number Badge */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-900/30 text-sm font-bold text-blue-400">
-            {setNumber}
-          </div>
-          <h3 className="text-lg font-semibold text-white">Set {setNumber}</h3>
-        </div>
-      </div>
+    <form onSubmit={handleSubmit} className="rounded-lg bg-[#0f1c2e] p-6 space-y-4">
+      <h3 className="text-lg font-semibold text-white">Set {setNumber}</h3>
 
-      {/* Input Fields */}
-      <div className="space-y-4">
+      {/* Weight and Reps Row */}
+      <div className="grid grid-cols-2 gap-4">
         {/* Weight Input */}
         <div>
-          <label htmlFor="weight-input" className="mb-2 block text-sm font-medium text-gray-300">
+          <label htmlFor="weight" className="block text-sm font-medium text-gray-300 mb-2">
             Weight (kg)
           </label>
           <input
-            id="weight-input"
+            id="weight"
             type="number"
-            inputMode="decimal"
             step="0.5"
             value={weight}
             onChange={(e) => {
               setWeight(e.target.value);
               if (errors.weight) setErrors({ ...errors, weight: undefined });
             }}
-            onKeyPress={(e) => handleKeyPress(e, 'weight')}
-            placeholder="e.g., 80"
-            className={`w-full rounded-lg bg-[#0a1628] px-4 py-4 text-lg text-white placeholder-gray-500 outline-none ring-1 transition-all ${
+            placeholder="0"
+            disabled={loading}
+            className={`w-full rounded-lg bg-[#0a1628] px-4 py-3 text-lg text-white placeholder-gray-500 outline-none ring-1 transition-all disabled:opacity-50 ${
               errors.weight
-                ? 'ring-red-500 focus:ring-2 focus:ring-red-500'
+                ? 'ring-red-500 focus:ring-red-500'
                 : 'ring-gray-700 focus:ring-2 focus:ring-blue-500'
             }`}
-            disabled={loading}
           />
-          {errors.weight && (
-            <p className="mt-1 text-sm text-red-400">{errors.weight}</p>
-          )}
+          {errors.weight && <p className="mt-1 text-xs text-red-400">{errors.weight}</p>}
         </div>
 
         {/* Reps Input */}
         <div>
-          <label htmlFor="reps-input" className="mb-2 block text-sm font-medium text-gray-300">
+          <label htmlFor="reps" className="block text-sm font-medium text-gray-300 mb-2">
             Reps
           </label>
           <input
-            id="reps-input"
+            id="reps"
             type="number"
-            inputMode="numeric"
-            step="1"
             value={reps}
             onChange={(e) => {
               setReps(e.target.value);
               if (errors.reps) setErrors({ ...errors, reps: undefined });
             }}
-            onKeyPress={(e) => handleKeyPress(e, 'reps')}
-            placeholder="e.g., 10"
-            className={`w-full rounded-lg bg-[#0a1628] px-4 py-4 text-lg text-white placeholder-gray-500 outline-none ring-1 transition-all ${
+            placeholder="0"
+            disabled={loading}
+            className={`w-full rounded-lg bg-[#0a1628] px-4 py-3 text-lg text-white placeholder-gray-500 outline-none ring-1 transition-all disabled:opacity-50 ${
               errors.reps
-                ? 'ring-red-500 focus:ring-2 focus:ring-red-500'
+                ? 'ring-red-500 focus:ring-red-500'
                 : 'ring-gray-700 focus:ring-2 focus:ring-blue-500'
             }`}
-            disabled={loading}
           />
-          {errors.reps && (
-            <p className="mt-1 text-sm text-red-400">{errors.reps}</p>
-          )}
+          {errors.reps && <p className="mt-1 text-xs text-red-400">{errors.reps}</p>}
         </div>
+      </div>
 
-        {/* RPE Input */}
-        <div>
-          <label htmlFor="rpe-input" className="mb-2 block text-sm font-medium text-gray-300">
-            RPE (1-10)
-            <span className="ml-2 text-xs text-gray-500">Rate of Perceived Exertion</span>
-          </label>
-          <input
-            id="rpe-input"
-            type="number"
-            inputMode="numeric"
-            step="1"
-            min="1"
-            max="10"
-            value={rpe}
-            onChange={(e) => {
-              setRpe(e.target.value);
-              if (errors.rpe) setErrors({ ...errors, rpe: undefined });
-            }}
-            onKeyPress={(e) => handleKeyPress(e, 'rpe')}
-            placeholder="e.g., 7"
-            className={`w-full rounded-lg bg-[#0a1628] px-4 py-4 text-lg text-white placeholder-gray-500 outline-none ring-1 transition-all ${
-              errors.rpe
-                ? 'ring-red-500 focus:ring-2 focus:ring-red-500'
-                : 'ring-gray-700 focus:ring-2 focus:ring-blue-500'
-            }`}
-            disabled={loading}
-          />
-          {errors.rpe && (
-            <p className="mt-1 text-sm text-red-400">{errors.rpe}</p>
-          )}
-          {/* RPE Scale Helper */}
-          <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-            <span>1 = Very easy</span>
-            <span>10 = Max effort</span>
-          </div>
+      {/* RPE Slider */}
+      <div>
+        <label htmlFor="rpe" className="block text-sm font-medium text-gray-300 mb-2">
+          RPE (Rate of Perceived Exertion): <span className="text-blue-400 font-semibold">{rpe}</span>
+        </label>
+        <input
+          id="rpe"
+          type="range"
+          min="1"
+          max="10"
+          step="0.5"
+          value={rpe}
+          onChange={(e) => setRpe(e.target.value)}
+          disabled={loading}
+          className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500 disabled:opacity-50"
+        />
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>1 - Easy</span>
+          <span>5 - Moderate</span>
+          <span>10 - Max</span>
         </div>
       </div>
 
       {/* Submit Button */}
       <button
-        onClick={handleSubmit}
-        disabled={!isFormValid || loading}
-        className={`mt-6 flex w-full items-center justify-center gap-2 rounded-lg py-4 text-lg font-semibold transition-all ${
-          !isFormValid || loading
-            ? 'cursor-not-allowed bg-gray-700 text-gray-400'
-            : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98]'
-        }`}
+        type="submit"
+        disabled={loading || !weight || !reps}
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-4 text-lg font-semibold text-white hover:bg-blue-700 transition-all disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"
       >
-        {loading ? (
-          <>
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-            <span>Saving...</span>
-          </>
-        ) : (
-          <>
-            <Check className="h-5 w-5" />
-            <span>Log Set {setNumber}</span>
-          </>
-        )}
+        <Plus className="h-5 w-5" />
+        {loading ? 'Logging...' : 'Log Set'}
       </button>
-    </div>
+    </form>
   );
 }
