@@ -1,9 +1,10 @@
 # Workout Player UI Design Specification
 
-**Version:** 1.0  
-**Date:** 2026-02-13  
+**Version:** 1.1  
+**Date:** 2026-02-14  
 **Issue:** #22 - Build Workout Player UI  
-**Status:** Design Phase  
+**Status:** Design Approved  
+**Last Updated:** Added collapsible form cues to exercise view
 
 ---
 
@@ -15,12 +16,14 @@
 3. **Progressive disclosure** - Show only what's needed for current step
 4. **Forgiving UX** - Easy to edit mistakes, clear confirmations for destructive actions
 5. **Mobile-first PWA** - Optimized for gym usage (bright screens, sweaty fingers)
+6. **Contextual help** - Form cues visible when needed, not hidden in menus
 
 ### User Context
 - User is in gym, potentially mid-set, distracted
 - Screen may be wet/dirty
 - User wants minimal cognitive load
 - Previous workout data helps build confidence
+- Form guidance should be instantly accessible
 
 ---
 
@@ -184,29 +187,60 @@ Today Screen (updated with completed workout)
 │                                 │
 │  Primary: Quads, Glutes         │  ← Muscle tags
 │                                 │
-│  ┌─────────────────────────┐   │
-│  │ Set 1 of 3              │   │  ← Set tracker
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│  ← NEW: Form cues (collapsed)
+│  │ 💡 Form Tips        [▼]     ││
+│  └─────────────────────────────┘│
+│                                 │
+│  ┌─────────────────────────────┐│
+│  │ Set 1 of 3                  ││  ← Set tracker
+│  └─────────────────────────────┘│
 │                                 │
 │  Weight (kg)                    │
-│  ┌─────────────────────────┐   │
-│  │         100             │   │  ← Large input
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│
+│  │         100                 ││  ← Large input
+│  └─────────────────────────────┘│
 │  Last time: 95 kg               │  ← Hint
 │                                 │
 │  Reps                           │
-│  ┌─────────────────────────┐   │
-│  │          8              │   │  ← Large input
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│
+│  │          8                  ││  ← Large input
+│  └─────────────────────────────┘│
 │  Last time: 10 reps             │  ← Hint
 │                                 │
 │  Target: 8-12 reps             │  ← Template guidance
 │                                 │
+│  ┌─────────────────────────────┐│
+│  │      Log Set                ││  ← Primary CTA
+│  └─────────────────────────────┘│
+└─────────────────────────────────┘
+```
+
+### Layout (Form Cues Expanded)
+```
+┌─────────────────────────────────┐
+│  Primary: Quads, Glutes         │
 │                                 │
-│  ┌─────────────────────────┐   │
-│  │      Log Set            │   │  ← Primary CTA
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│  ← NEW: Form cues (expanded)
+│  │ 💡 Form Tips        [▲]     ││
+│  ├─────────────────────────────┤│
+│  │ ✓ Feet shoulder-width       ││
+│  │   apart                     ││
+│  │                             ││
+│  │ ✓ Chest up, core braced     ││
+│  │                             ││
+│  │ ✓ Break at hips and knees   ││
+│  │   simultaneously            ││
+│  │                             ││
+│  │ ✓ Descend until thighs      ││
+│  │   parallel to ground        ││
+│  └─────────────────────────────┘│
 │                                 │
+│  ┌─────────────────────────────┐│
+│  │ Set 1 of 3                  ││
+│  └─────────────────────────────┘│
+│                                 │
+│  Weight (kg)                    │
+│  ...                            │
 └─────────────────────────────────┘
 ```
 
@@ -221,22 +255,22 @@ Today Screen (updated with completed workout)
 │                                 │
 │  ✓ Completed Sets               │
 │                                 │
-│  ┌─────────────────────────┐   │
-│  │ Set 1  100 kg × 8 reps  │ ✏ │  ← Editable
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│
+│  │ Set 1  100 kg × 8 reps  [✏] ││  ← Editable
+│  └─────────────────────────────┘│
 │                                 │
-│  ┌─────────────────────────┐   │
-│  │ Set 2  100 kg × 8 reps  │ ✏ │
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│
+│  │ Set 2  100 kg × 8 reps  [✏] ││
+│  └─────────────────────────────┘│
 │                                 │
-│  ┌─────────────────────────┐   │
-│  │ Set 3  100 kg × 7 reps  │ ✏ │
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│
+│  │ Set 3  100 kg × 7 reps  [✏] ││
+│  └─────────────────────────────┘│
 │                                 │
 │                                 │
-│  ┌─────────────────────────┐   │
-│  │   Next Exercise →       │   │  ← Next action
-│  └─────────────────────────┘   │
+│  ┌─────────────────────────────┐│
+│  │   Next Exercise →           ││  ← Next action
+│  └─────────────────────────────┘│
 │                                 │
 │  [+ Add Set]                    │  ← Optional 4th set
 │                                 │
@@ -272,6 +306,78 @@ Today Screen (updated with completed workout)
     className="h-full bg-primary transition-all duration-300"
     style={{ width: `${progress}%` }}
   />
+</div>
+```
+
+#### NEW: Form Cues Collapsible
+```tsx
+'use client';
+
+import { useState } from 'react';
+import { Lightbulb, ChevronDown, Check } from 'lucide-react';
+
+interface FormCuesCollapsibleProps {
+  cues: string[];
+  defaultOpen?: boolean;
+}
+
+export function FormCuesCollapsible({ cues, defaultOpen = false }: FormCuesCollapsibleProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  
+  return (
+    <div className="border border-border rounded-lg overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full p-3 bg-muted/50 hover:bg-muted transition"
+      >
+        <div className="flex items-center gap-2">
+          <Lightbulb className="w-4 h-4 text-yellow-400" />
+          <span className="text-sm font-medium">Form Tips</span>
+        </div>
+        <ChevronDown 
+          className={`w-4 h-4 transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+      
+      {isOpen && (
+        <div className="p-3 space-y-2 border-t border-border animate-in slide-in-from-top-2">
+          {cues.map((cue, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+              <span className="text-sm text-muted-foreground">{cue}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+**Usage in Exercise View:**
+```tsx
+<div className="space-y-4 p-4">
+  {/* Muscle Tags */}
+  <div className="text-sm text-muted-foreground">
+    Primary: {exercise.primary_muscles.join(', ')}
+  </div>
+  
+  {/* NEW: Form Cues (open on first set, closed after) */}
+  <FormCuesCollapsible 
+    cues={exercise.form_cues}
+    defaultOpen={currentSetIndex === 0}
+  />
+  
+  {/* Set Tracker */}
+  <div className="text-center py-2 bg-muted rounded-lg">
+    <p className="text-sm font-medium">
+      Set {currentSetIndex + 1} of {targetSets}
+    </p>
+  </div>
+  
+  {/* Weight/Reps Inputs ... */}
 </div>
 ```
 
@@ -350,6 +456,12 @@ Today Screen (updated with completed workout)
 ```
 
 ### Behavior
+- **Form Cues Collapsible:**
+  - Default **open** on Set 1 of each exercise (help when most needed)
+  - Default **closed** on Set 2+ (less clutter after user has seen cues)
+  - User can toggle open/closed anytime
+  - Smooth expand/collapse animation (200ms)
+  - Zero extra taps when expanded (contextual help)
 - **Weight/Reps inputs:** 
   - `inputMode="decimal"` for weight (allows decimals like 22.5 kg)
   - `inputMode="numeric"` for reps (integers only)
@@ -539,7 +651,7 @@ Today Screen (updated with completed workout)
 
 ## Interaction: Back Button During Workout
 
-### Improved Flow (Your Suggestion)
+### Improved Flow (User Improvement)
 
 **Scenario:** User taps back button mid-workout (has logged ≥1 set).
 
@@ -676,13 +788,12 @@ ALTER TABLE workouts ADD COLUMN status TEXT DEFAULT 'complete'
 
 ## Interaction: Menu (Exercise Screen)
 
-### Menu Options
+### Menu Options (UPDATED)
 ```
 ┌─────────────────────────────────┐
 │         Workout Options         │  ← Bottom sheet
 ├─────────────────────────────────┤
 │                                 │
-│  View Form Cues                 │  ← Show exercise.form_cues
 │  Skip This Exercise             │  ← Jump to next
 │  Add Note to Workout            │  ← Phase 3: workout notes
 │  End Workout Early              │  ← Go to summary
@@ -692,26 +803,7 @@ ALTER TABLE workouts ADD COLUMN status TEXT DEFAULT 'complete'
 └─────────────────────────────────┘
 ```
 
-### View Form Cues
-```
-┌─────────────────────────────────┐
-│         Squat Form Cues         │
-├─────────────────────────────────┤
-│                                 │
-│  ✓ Feet shoulder-width apart    │
-│                                 │
-│  ✓ Chest up, core braced        │
-│                                 │
-│  ✓ Break at hips and knees      │
-│    simultaneously               │
-│                                 │
-│  ✓ Descend until thighs         │
-│    parallel to ground           │
-│                                 │
-│  [Got it]                       │
-│                                 │
-└─────────────────────────────────┘
-```
+**Note:** "View Form Cues" removed from menu since cues are now inline via collapsible component.
 
 ---
 
@@ -751,11 +843,13 @@ ALTER TABLE workouts ADD COLUMN status TEXT DEFAULT 'complete'
 - ARIA labels for icon-only buttons
 - Form labels properly associated
 - Focus management (auto-focus inputs)
+- Collapsible regions use `aria-expanded`
 
 ### Keyboard Navigation
 - Tab order logical (top to bottom, left to right)
 - Enter to submit forms
 - Escape to close modals/sheets
+- Space to toggle collapsibles
 
 ---
 
@@ -839,6 +933,7 @@ function releaseWakeLock() {
 - **Set logged:** Green checkmark animation + haptic pulse
 - **Next exercise:** Slide-in transition (left to right)
 - **Rest timer:** Circular progress ring around countdown
+- **Collapsible expand/collapse:** Smooth 200ms transition with chevron rotation
 
 ### Page Transitions
 - **Enter:** Fade in + slide up (200ms)
@@ -856,6 +951,7 @@ function releaseWakeLock() {
 ### Phase 1: Core Flow (MVP)
 - [ ] Template picker page
 - [ ] Exercise view with set logging
+- [ ] **Form cues collapsible component** (inline, contextual)
 - [ ] Basic rest timer
 - [ ] Workout summary & save to DB
 - [ ] localStorage persistence
@@ -863,7 +959,6 @@ function releaseWakeLock() {
 ### Phase 2: Polish
 - [ ] "Last time" hints from previous workouts
 - [ ] Edit/delete logged sets
-- [ ] Form cues modal
 - [ ] Improved back button (save/discard dialog)
 - [ ] Progress bar and exercise counter
 
@@ -886,10 +981,15 @@ function releaseWakeLock() {
 <Badge variant="success | info | warning | danger" />
 <BottomSheet isOpen={bool} onClose={() => {}} />
 <Modal isOpen={bool} onClose={() => {}} />
+<Collapsible defaultOpen={bool}> {/* NEW */}
+  <CollapsibleTrigger />
+  <CollapsibleContent />
+</Collapsible>
 
 // Domain Components
 <TemplateCard template={Template} onSelect={() => {}} />
 <ExerciseHeader exercise={Exercise} progress={number} />
+<FormCuesCollapsible cues={string[]} defaultOpen={bool} /> {/* NEW */}
 <SetInputForm onSubmit={(data) => {}} />
 <LoggedSetItem set={Set} onEdit={() => {}} onDelete={() => {}} />
 <RestTimer duration={number} onComplete={() => {}} />
@@ -908,6 +1008,24 @@ function releaseWakeLock() {
 - **Storage:** localStorage (workout state persistence)
 - **PWA:** Service worker + manifest (already configured)
 - **TypeScript:** Strict mode, no `any`
+- **Icons:** Lucide React (Lightbulb, ChevronDown, Check, etc.)
+
+---
+
+## Design Decisions Log
+
+### v1.1 (2026-02-14)
+**Decision:** Move form cues from menu to inline collapsible component  
+**Rationale:** 
+- Better UX - zero friction access to form guidance
+- Contextual help when needed (open on Set 1, closed after)
+- More discoverable than hidden menu option
+- Reduces menu clutter
+
+**Impact:**
+- Added `FormCuesCollapsible` component to Phase 1
+- Updated Exercise View layout
+- Simplified menu to 3 options (removed "View Form Cues")
 
 ---
 
@@ -929,12 +1047,14 @@ function releaseWakeLock() {
 - Average time to log a set < 10 seconds
 - Zero data loss on refresh/navigate away
 - 95%+ of workouts saved successfully
+- Form cues accessed within first 2 sets (80%+ of new users)
 
 ### Technical
 - Page load time < 1s
 - localStorage recovery rate 100%
 - No layout shift during input focus
 - Smooth 60fps animations
+- Collapsible animations render at 60fps
 
 ---
 
