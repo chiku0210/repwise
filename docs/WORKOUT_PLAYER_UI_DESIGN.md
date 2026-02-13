@@ -1,10 +1,10 @@
 # Workout Player UI Design Specification
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** 2026-02-14  
 **Issue:** #22 - Build Workout Player UI  
 **Status:** Design Approved  
-**Last Updated:** Added collapsible form cues to exercise view
+**Last Updated:** Added template preview screen before workout start
 
 ---
 
@@ -17,6 +17,7 @@
 4. **Forgiving UX** - Easy to edit mistakes, clear confirmations for destructive actions
 5. **Mobile-first PWA** - Optimized for gym usage (bright screens, sweaty fingers)
 6. **Contextual help** - Form cues visible when needed, not hidden in menus
+7. **Informed commitment** - Users see full workout details before starting
 
 ### User Context
 - User is in gym, potentially mid-set, distracted
@@ -24,6 +25,7 @@
 - User wants minimal cognitive load
 - Previous workout data helps build confidence
 - Form guidance should be instantly accessible
+- **NEW:** Users want to review workout before committing to start
 
 ---
 
@@ -60,13 +62,15 @@ colors: {
 
 ---
 
-## User Flow Overview
+## User Flow Overview (UPDATED)
 
 ```
 Today Screen
     ↓ [Start Workout]
 Template Picker (/workout)
-    ↓ [Select Template]
+    ↓ [Tap Template Card]
+Template Detail/Preview (/workout/[templateId]/preview)  ← NEW
+    ↓ [Start Workout Button]
 Workout Player (/workout/[templateId])
     ├→ Exercise 1
     │   ├→ Set 1 → Rest Timer → Set 2 → Rest → Set 3
@@ -164,14 +168,214 @@ Today Screen (updated with completed workout)
 </span>
 ```
 
-### Behavior
-- **On card tap:** Navigate to `/workout/{templateId}` (starts workout)
+### Behavior (UPDATED)
+- **On card tap:** Navigate to `/workout/{templateId}/preview` (preview screen)
 - **Progressive disclosure:** Show 3 featured templates initially, "Show all" button expands
 - **Filtering (Phase 3):** Equipment, difficulty, duration filters
 
 ---
 
-## Screen 2: Workout Player - Exercise View
+## Screen 2: Template Detail/Preview (NEW)
+
+### Route
+`/workout/[templateId]/preview`
+
+### Purpose
+Allow users to review the full workout before committing to start. Shows complete exercise list, equipment needs, and full description.
+
+### Layout
+```
+┌─────────────────────────────────┐
+│ ← Back      Full Body A    [★] │  ← Header (sticky)
+├─────────────────────────────────┤
+│                                 │
+│  Beginner • 50 min • 5 exercises│  ← Meta badges
+│                                 │
+│  Master the fundamental compound│  ← Full description
+│  movements that build total-body│     (not truncated)
+│  strength. Perfect for beginners│
+│  training 3x per week...        │
+│                                 │
+│  📦 Equipment Needed             │
+│  • Barbell                      │
+│  • Bench                        │
+│  • Squat rack                   │
+│                                 │
+│  💪 Exercises                    │
+│                                 │
+│  ┌─────────────────────────────┐│
+│  │ 1. Squat                    ││  ← Exercise preview
+│  │    3 sets • 8-12 reps   [>] ││
+│  │    Quads, Glutes            ││
+│  └─────────────────────────────┘│
+│                                 │
+│  ┌─────────────────────────────┐│
+│  │ 2. Bench Press              ││
+│  │    3 sets • 8-12 reps   [>] ││
+│  │    Chest, Triceps           ││
+│  └─────────────────────────────┘│
+│                                 │
+│  ┌─────────────────────────────┐│
+│  │ 3. Barbell Row              ││
+│  │    3 sets • 8-12 reps   [>] ││
+│  │    Back, Biceps             ││
+│  └─────────────────────────────┘│
+│                                 │
+│  ┌─────────────────────────────┐│
+│  │ 4. Overhead Press           ││
+│  │    3 sets • 8-12 reps   [>] ││
+│  │    Shoulders, Triceps       ││
+│  └─────────────────────────────┘│
+│                                 │
+│  ┌─────────────────────────────┐│
+│  │ 5. Deadlift                 ││
+│  │    3 sets • 5-8 reps    [>] ││
+│  │    Back, Hamstrings, Glutes ││
+│  └─────────────────────────────┘│
+│                                 │
+│                                 │
+├─────────────────────────────────┤  ← Sticky footer
+│  ┌─────────────────────────────┐│
+│  │   Start Workout 🚀          ││  ← Primary CTA
+│  └─────────────────────────────┘│
+└─────────────────────────────────┘
+```
+
+### Component
+```tsx
+<div className="min-h-screen bg-background pb-24">
+  {/* Header */}
+  <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
+    <button onClick={() => router.back()}>
+      <ChevronLeft className="w-6 h-6" />
+    </button>
+    <h1 className="text-lg font-semibold">{template.name}</h1>
+    <button onClick={handleToggleFavorite}>
+      <Star className={`w-5 h-5 ${isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+    </button>
+  </div>
+  
+  <div className="p-4 space-y-6">
+    {/* Meta Row */}
+    <div className="flex items-center gap-2 text-sm flex-wrap">
+      <Badge difficulty={template.difficulty} />
+      <span className="text-muted-foreground">•</span>
+      <span className="text-muted-foreground">{template.estimated_duration_minutes} min</span>
+      <span className="text-muted-foreground">•</span>
+      <span className="text-muted-foreground">{exerciseCount} exercises</span>
+    </div>
+    
+    {/* Full Description */}
+    <p className="text-muted-foreground leading-relaxed">
+      {template.description}
+    </p>
+    
+    {/* Equipment Section */}
+    <div>
+      <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+        <Package className="w-4 h-4" />
+        Equipment Needed
+      </h2>
+      <div className="flex flex-wrap gap-2">
+        {template.equipment_needed.map((eq) => (
+          <span key={eq} className="px-3 py-1 bg-muted border border-border rounded-full text-sm">
+            {eq}
+          </span>
+        ))}
+      </div>
+    </div>
+    
+    {/* Exercises List */}
+    <div>
+      <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+        <Dumbbell className="w-4 h-4" />
+        Exercises
+      </h2>
+      <div className="space-y-2">
+        {exercises.map((exercise, i) => (
+          <ExercisePreviewCard
+            key={exercise.id}
+            exercise={exercise}
+            orderIndex={i + 1}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+  
+  {/* Sticky CTA Footer */}
+  <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border">
+    <button
+      onClick={handleStartWorkout}
+      className="w-full py-4 bg-primary text-primary-foreground rounded-lg font-semibold text-lg flex items-center justify-center gap-2 active:scale-95 transition"
+    >
+      Start Workout
+      <Zap className="w-5 h-5" />
+    </button>
+  </div>
+</div>
+```
+
+### ExercisePreviewCard Component
+```tsx
+interface ExercisePreviewCardProps {
+  exercise: {
+    id: string;
+    name: string;
+    target_sets: number;
+    reps_range: string; // e.g., "8-12"
+    primary_muscles: string[];
+  };
+  orderIndex: number;
+}
+
+export function ExercisePreviewCard({ exercise, orderIndex }: ExercisePreviewCardProps) {
+  return (
+    <div className="bg-muted border border-border rounded-lg p-3 hover:bg-muted/80 transition cursor-pointer">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono text-muted-foreground font-semibold">
+              {orderIndex}.
+            </span>
+            <h3 className="font-semibold">{exercise.name}</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {exercise.target_sets} sets • {exercise.reps_range} reps
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {exercise.primary_muscles.join(', ')}
+          </p>
+        </div>
+        <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+      </div>
+    </div>
+  );
+}
+```
+
+### Behavior
+- **On mount:** Fetch template details with exercises via JOIN query
+- **Star button:** Toggle favorite status (Phase 3 feature, non-blocking)
+- **Exercise card tap (Phase 3):** Open exercise detail modal with form cues, video demos
+- **Start Workout button:**
+  - Navigate to `/workout/{templateId}` (workout player)
+  - Initialize workout session in memory
+  - Start localStorage persistence
+  - Record `startedAt` timestamp
+- **Back button:** Return to template picker
+
+### Why This Screen is Important
+1. ✅ **Informed decision** - User sees full commitment before starting
+2. ✅ **Equipment check** - User can verify they have needed equipment
+3. ✅ **Mental preparation** - User knows what's coming
+4. ✅ **Reduces errors** - Prevents accidental workout starts
+5. ✅ **Builds confidence** - Clear expectations for beginners
+6. ✅ **Standard UX pattern** - Matches user expectations from other fitness apps
+
+---
+
+## Screen 3: Workout Player - Exercise View
 
 ### Route
 `/workout/[templateId]`
@@ -187,7 +391,7 @@ Today Screen (updated with completed workout)
 │                                 │
 │  Primary: Quads, Glutes         │  ← Muscle tags
 │                                 │
-│  ┌─────────────────────────────┐│  ← NEW: Form cues (collapsed)
+│  ┌─────────────────────────────┐│  ← Form cues (collapsed)
 │  │ 💡 Form Tips        [▼]     ││
 │  └─────────────────────────────┘│
 │                                 │
@@ -220,7 +424,7 @@ Today Screen (updated with completed workout)
 ┌─────────────────────────────────┐
 │  Primary: Quads, Glutes         │
 │                                 │
-│  ┌─────────────────────────────┐│  ← NEW: Form cues (expanded)
+│  ┌─────────────────────────────┐│  ← Form cues (expanded)
 │  │ 💡 Form Tips        [▲]     ││
 │  ├─────────────────────────────┤│
 │  │ ✓ Feet shoulder-width       ││
@@ -309,7 +513,7 @@ Today Screen (updated with completed workout)
 </div>
 ```
 
-#### NEW: Form Cues Collapsible
+#### Form Cues Collapsible
 ```tsx
 'use client';
 
@@ -364,7 +568,7 @@ export function FormCuesCollapsible({ cues, defaultOpen = false }: FormCuesColla
     Primary: {exercise.primary_muscles.join(', ')}
   </div>
   
-  {/* NEW: Form Cues (open on first set, closed after) */}
+  {/* Form Cues (open on first set, closed after) */}
   <FormCuesCollapsible 
     cues={exercise.form_cues}
     defaultOpen={currentSetIndex === 0}
@@ -479,7 +683,7 @@ export function FormCuesCollapsible({ cues, defaultOpen = false }: FormCuesColla
 
 ---
 
-## Screen 3: Rest Timer
+## Screen 4: Rest Timer
 
 ### Layout (Overlay)
 ```
@@ -549,7 +753,7 @@ export function FormCuesCollapsible({ cues, defaultOpen = false }: FormCuesColla
 
 ---
 
-## Screen 4: Workout Summary
+## Screen 5: Workout Summary
 
 ### Layout
 ```
@@ -651,7 +855,7 @@ export function FormCuesCollapsible({ cues, defaultOpen = false }: FormCuesColla
 
 ## Interaction: Back Button During Workout
 
-### Improved Flow (User Improvement)
+### Improved Flow
 
 **Scenario:** User taps back button mid-workout (has logged ≥1 set).
 
@@ -788,7 +992,7 @@ ALTER TABLE workouts ADD COLUMN status TEXT DEFAULT 'complete'
 
 ## Interaction: Menu (Exercise Screen)
 
-### Menu Options (UPDATED)
+### Menu Options
 ```
 ┌─────────────────────────────────┐
 │         Workout Options         │  ← Bottom sheet
@@ -857,7 +1061,8 @@ ALTER TABLE workouts ADD COLUMN status TEXT DEFAULT 'complete'
 
 ### Data Loading
 - **Templates list:** Fetch once on `/workout` mount, cache in memory
-- **Template detail:** Fetch on player mount, include exercise names via JOIN
+- **Template detail (NEW):** Fetch on preview page mount, include exercises via JOIN
+- **Workout player:** Use cached template data from preview, no re-fetch
 - **Previous workout data:** Fetch on exercise change (lazy load per exercise)
 
 ### State Persistence
@@ -942,6 +1147,7 @@ function releaseWakeLock() {
 
 ### Loading States
 - **Template list:** Skeleton cards (pulse animation)
+- **Template preview:** Skeleton for exercises list
 - **Save workout:** Button shows spinner, disabled state
 
 ---
@@ -950,6 +1156,7 @@ function releaseWakeLock() {
 
 ### Phase 1: Core Flow (MVP)
 - [ ] Template picker page
+- [ ] **Template preview/detail page** (NEW - shows exercises before start)
 - [ ] Exercise view with set logging
 - [ ] **Form cues collapsible component** (inline, contextual)
 - [ ] Basic rest timer
@@ -968,6 +1175,7 @@ function releaseWakeLock() {
 - [ ] Add extra set beyond template
 - [ ] Workout history view
 - [ ] PR celebrations (🎉 when new personal record)
+- [ ] Exercise detail modal from preview (form cues, video demos)
 
 ---
 
@@ -981,21 +1189,37 @@ function releaseWakeLock() {
 <Badge variant="success | info | warning | danger" />
 <BottomSheet isOpen={bool} onClose={() => {}} />
 <Modal isOpen={bool} onClose={() => {}} />
-<Collapsible defaultOpen={bool}> {/* NEW */}
+<Collapsible defaultOpen={bool}>
   <CollapsibleTrigger />
   <CollapsibleContent />
 </Collapsible>
 
 // Domain Components
 <TemplateCard template={Template} onSelect={() => {}} />
+<ExercisePreviewCard exercise={Exercise} orderIndex={number} /> {/* NEW */}
 <ExerciseHeader exercise={Exercise} progress={number} />
-<FormCuesCollapsible cues={string[]} defaultOpen={bool} /> {/* NEW */}
+<FormCuesCollapsible cues={string[]} defaultOpen={bool} />
 <SetInputForm onSubmit={(data) => {}} />
 <LoggedSetItem set={Set} onEdit={() => {}} onDelete={() => {}} />
 <RestTimer duration={number} onComplete={() => {}} />
 <ProgressBar current={number} total={number} />
 <WorkoutSummary stats={Stats} onSave={() => {}} onDiscard={() => {}} />
 ```
+
+---
+
+## Route Structure (UPDATED)
+
+```
+/workout                           → Template picker
+/workout/[templateId]/preview      → Template preview/detail (NEW)
+/workout/[templateId]              → Workout player (active session)
+```
+
+**Navigation Flow:**
+1. User taps template card → Navigate to `/workout/[id]/preview`
+2. User reviews exercises, equipment → Taps "Start Workout"
+3. Navigate to `/workout/[id]` → Player starts, `startedAt` recorded
 
 ---
 
@@ -1008,11 +1232,28 @@ function releaseWakeLock() {
 - **Storage:** localStorage (workout state persistence)
 - **PWA:** Service worker + manifest (already configured)
 - **TypeScript:** Strict mode, no `any`
-- **Icons:** Lucide React (Lightbulb, ChevronDown, Check, etc.)
+- **Icons:** Lucide React (Lightbulb, ChevronDown, Check, Package, Dumbbell, Zap, etc.)
 
 ---
 
 ## Design Decisions Log
+
+### v1.2 (2026-02-14)
+**Decision:** Add template preview/detail screen before workout start  
+**Rationale:** 
+- User needs to see full commitment before starting workout
+- Equipment verification prevents mid-workout surprises
+- Reduces accidental workout starts
+- Builds user confidence (especially beginners)
+- Matches standard fitness app UX patterns
+
+**Impact:**
+- Added new route: `/workout/[templateId]/preview`
+- Template card now navigates to preview (not directly to player)
+- Added `ExercisePreviewCard` component
+- Updated user flow diagram
+- Added to Phase 1 checklist
+- Improved data loading strategy (fetch on preview, cache for player)
 
 ### v1.1 (2026-02-14)
 **Decision:** Move form cues from menu to inline collapsible component  
@@ -1043,11 +1284,12 @@ function releaseWakeLock() {
 ## Success Metrics
 
 ### User Experience
-- Workout start-to-finish < 3 taps
+- Template preview → workout start < 2 taps
 - Average time to log a set < 10 seconds
 - Zero data loss on refresh/navigate away
 - 95%+ of workouts saved successfully
 - Form cues accessed within first 2 sets (80%+ of new users)
+- **NEW:** <5% accidental workout starts (preview screen prevents errors)
 
 ### Technical
 - Page load time < 1s
@@ -1059,4 +1301,4 @@ function releaseWakeLock() {
 ---
 
 **Status:** Design approved and ready for implementation  
-**Next:** Begin Phase 1 development (core flow)
+**Next:** Begin Phase 1 development (core flow with preview screen)
