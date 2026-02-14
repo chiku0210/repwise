@@ -107,19 +107,22 @@ export default function WorkoutPickerPage() {
         {/* Filter Tabs */}
         <div className="px-4 pb-3 overflow-x-auto scrollbar-hide">
           <div className="flex gap-2">
-            {filterTabs.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setActiveFilter(tab.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  activeFilter === tab.value
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+            {filterTabs.map((tab) => {
+              const isActive = activeFilter === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveFilter(tab.value)}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap border-2 ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105'
+                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted/50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -131,7 +134,7 @@ export default function WorkoutPickerPage() {
             <TemplateCardSkeleton />
             <TemplateCardSkeleton />
             <TemplateCardSkeleton />
-          </>
+          </div>
         )}
 
         {error && (
