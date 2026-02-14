@@ -113,10 +113,10 @@ export default function WorkoutPickerPage() {
                 <button
                   key={tab.value}
                   onClick={() => setActiveFilter(tab.value)}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap border-2 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                     isActive
-                      ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105'
-                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground hover:bg-muted/50'
+                      ? 'bg-primary text-primary-foreground shadow-sm ring-2 ring-muted ring-offset-2 ring-offset-background'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                   }`}
                 >
                   {tab.label}
