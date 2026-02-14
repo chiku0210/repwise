@@ -27,59 +27,34 @@ export default function WorkoutPickerPage() {
   useEffect(() => {
     async function fetchTemplates() {
       try {
-        console.log('🔍 Fetching templates...');
         const supabase = getSupabaseBrowserClient();
         
-        // Fetch templates with exercise count
+        // Fetch templates from 'templates' table (not 'workout_templates')
         const { data, error: fetchError } = await supabase
-          .from('workout_templates')
-          .select(`
-            id,
-            name,
-            description,
-            difficulty,
-            estimated_duration_minutes,
-            equipment_needed
-          `)
+          .from('templates')
+          .select('id, name, description, difficulty, estimated_duration_minutes, equipment_needed, exercises')
+          .eq('is_public', true)
           .order('difficulty', { ascending: true })
           .order('name', { ascending: true });
 
-        console.log('📊 Supabase response:', { data, error: fetchError });
-
-        if (fetchError) {
-          console.error('❌ Supabase error:', fetchError);
-          throw new Error(fetchError.message || 'Unknown database error');
-        }
-
-        if (!data) {
-          console.warn('⚠️ No data returned');
-          setTemplates([]);
-          setLoading(false);
-          return;
-        }
+        if (fetchError) throw fetchError;
 
         // Transform data
-        const transformedTemplates: WorkoutTemplate[] = data.map((template: any) => {
-          console.log('🔄 Transforming template:', template);
-          return {
-            id: template.id,
-            name: template.name,
-            description: template.description,
-            difficulty: template.difficulty,
-            estimated_duration_minutes: template.estimated_duration_minutes,
-            exercise_count: 0, // TODO: Get from template_exercises join
-            equipment: template.equipment_needed || [],
-          };
-        });
+        const transformedTemplates: WorkoutTemplate[] = (data || []).map((template: any) => ({
+          id: template.id,
+          name: template.name,
+          description: template.description,
+          difficulty: template.difficulty,
+          estimated_duration_minutes: template.estimated_duration_minutes,
+          // Count exercises from JSONB array
+          exercise_count: Array.isArray(template.exercises) ? template.exercises.length : 0,
+          equipment: template.equipment_needed || [],
+        }));
 
-        console.log('✅ Transformed templates:', transformedTemplates);
         setTemplates(transformedTemplates);
-      } catch (err: any) {
-        console.error('💥 Error fetching templates:', err);
-        console.error('Error name:', err?.name);
-        console.error('Error message:', err?.message);
-        console.error('Error stack:', err?.stack);
-        setError(err?.message || 'Failed to load workout templates. Please try again.');
+      } catch (err) {
+        console.error('Error fetching templates:', err);
+        setError('Failed to load workout templates. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -119,8 +94,7 @@ export default function WorkoutPickerPage() {
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-            <p className="text-red-400 text-sm font-semibold mb-2">Error loading templates</p>
-            <p className="text-red-400 text-xs mb-3">{error}</p>
+            <p className="text-red-400 text-sm">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="mt-2 text-sm text-red-400 underline"
@@ -133,7 +107,6 @@ export default function WorkoutPickerPage() {
         {!loading && !error && templates.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No workout templates available yet.</p>
-            <p className="text-xs text-muted-foreground mt-2">Check your database or add some templates first.</p>
           </div>
         )}
 
