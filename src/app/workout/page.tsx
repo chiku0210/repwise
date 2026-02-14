@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ChevronLeft, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, LayoutGrid, Search, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { TemplateCard } from '@/components/workout/TemplateCard';
@@ -24,14 +24,16 @@ export default function WorkoutPickerPage() {
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<DifficultyFilter>('all');
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     async function fetchTemplates() {
       try {
         const supabase = getSupabaseBrowserClient();
         
-        // Fetch templates - we'll sort on client side for proper difficulty order
         const { data, error: fetchError } = await supabase
           .from('templates')
           .select('id, name, description, difficulty, estimated_duration_minutes, equipment_needed, exercises')
@@ -39,8 +41,12 @@ export default function WorkoutPickerPage() {
 
         if (fetchError) throw fetchError;
 
+        if (!data || data.length === 0) {
+          throw new Error('No workout templates found. Please add templates to the database.');
+        }
+
         // Transform data
-        const transformedTemplates: WorkoutTemplate[] = (data || []).map((template: any) => ({
+        const transformedTemplates: WorkoutTemplate[] = data.map((template: any) => ({
           id: template.id,
           name: template.name,
           description: template.description,
@@ -61,7 +67,8 @@ export default function WorkoutPickerPage() {
         setTemplates(transformedTemplates);
       } catch (err) {
         console.error('Error fetching templates:', err);
-        setError('Failed to load workout templates. Please try again.');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load workout templates. Please try again.';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -74,10 +81,25 @@ export default function WorkoutPickerPage() {
     router.push(`/workout/${templateId}/preview`);
   };
 
-  // Filter templates based on active filter
-  const filteredTemplates = activeFilter === 'all' 
-    ? templates 
-    : templates.filter(t => t.difficulty === activeFilter);
+  // Filter templates by search query and difficulty
+  const filteredTemplates = templates.filter((template) => {
+    // Difficulty filter
+    if (activeFilter !== 'all' && template.difficulty !== activeFilter) {
+      return false;
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      return (
+        template.name.toLowerCase().includes(query) ||
+        template.description.toLowerCase().includes(query) ||
+        template.equipment.some((eq) => eq.toLowerCase().includes(query))
+      );
+    }
+
+    return true;
+  });
 
   const filterTabs: { value: DifficultyFilter; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -104,6 +126,21 @@ export default function WorkoutPickerPage() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search templates..."
+              className="w-full rounded-lg bg-[#0a1628] py-3 pl-10 pr-4 text-white placeholder-gray-400 outline-none ring-1 ring-gray-700 focus:ring-2 focus:ring-blue-500 transition-all"
+              disabled={loading || !!error}
+            />
+          </div>
+        </div>
+
         {/* Filter Tabs - Pill Style */}
         <div className="px-4 pb-3">
           <div className="flex p-1 space-x-1 bg-muted/30 rounded-xl">
@@ -113,8 +150,9 @@ export default function WorkoutPickerPage() {
                 <button
                   key={tab.value}
                   onClick={() => setActiveFilter(tab.value)}
+                  disabled={loading || !!error}
                   className={`
-                    flex-1 px-3 py-2.5 text-sm font-semibold transition-all duration-200 rounded-lg whitespace-nowrap
+                    flex-1 px-3 py-2.5 text-sm font-semibold transition-all duration-200 rounded-lg whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed
                     ${
                       isActive
                         ? 'bg-white text-zinc-900 shadow-lg'
@@ -130,7 +168,7 @@ export default function WorkoutPickerPage() {
         </div>
       </div>
 
-      {/* Content - Removed max-w-2xl, using global layout width */}
+      {/* Content */}
       <div className="px-4 py-6 space-y-4">
         {loading && (
           <>
@@ -141,15 +179,20 @@ export default function WorkoutPickerPage() {
         )}
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-5">
-            <p className="text-red-400 text-sm font-semibold mb-2">⚠️ Error loading templates</p>
-            <p className="text-red-400/80 text-xs mb-3">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors"
-            >
-              Retry
-            </button>
+          <div className="rounded-lg bg-red-900/20 p-6 border border-red-800">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-400 mb-2">Database Error</h3>
+                <p className="text-sm text-red-300 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -161,11 +204,19 @@ export default function WorkoutPickerPage() {
             <p className="text-muted-foreground font-medium mb-2">
               No {activeFilter !== 'all' && activeFilter} templates found
             </p>
+            {searchQuery && (
+              <p className="text-sm text-gray-500 mb-3">
+                Try adjusting your search
+              </p>
+            )}
             <button
-              onClick={() => setActiveFilter('all')}
+              onClick={() => {
+                setActiveFilter('all');
+                setSearchQuery('');
+              }}
               className="text-sm text-primary hover:underline"
             >
-              View all templates
+              Clear filters
             </button>
           </div>
         )}
