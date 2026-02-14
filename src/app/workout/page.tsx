@@ -31,13 +31,11 @@ export default function WorkoutPickerPage() {
       try {
         const supabase = getSupabaseBrowserClient();
         
-        // Fetch templates from 'templates' table
+        // Fetch templates - we'll sort on client side for proper difficulty order
         const { data, error: fetchError } = await supabase
           .from('templates')
           .select('id, name, description, difficulty, estimated_duration_minutes, equipment_needed, exercises')
-          .eq('is_public', true)
-          .order('difficulty', { ascending: true })
-          .order('name', { ascending: true });
+          .eq('is_public', true);
 
         if (fetchError) throw fetchError;
 
@@ -51,6 +49,14 @@ export default function WorkoutPickerPage() {
           exercise_count: Array.isArray(template.exercises) ? template.exercises.length : 0,
           equipment: template.equipment_needed || [],
         }));
+
+        // Sort by difficulty (beginner → intermediate → advanced), then by name
+        const difficultyOrder = { beginner: 1, intermediate: 2, advanced: 3 };
+        transformedTemplates.sort((a, b) => {
+          const diffComparison = difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+          if (diffComparison !== 0) return diffComparison;
+          return a.name.localeCompare(b.name);
+        });
 
         setTemplates(transformedTemplates);
       } catch (err) {
