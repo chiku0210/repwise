@@ -134,7 +134,7 @@ export default function WorkoutPickerPage() {
             <TemplateCardSkeleton />
             <TemplateCardSkeleton />
             <TemplateCardSkeleton />
-          </div>
+          </>
         )}
 
         {error && (
