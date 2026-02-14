@@ -130,8 +130,8 @@ export default function WorkoutPickerPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-6 space-y-4 max-w-2xl mx-auto">
+      {/* Content - Removed max-w-2xl, using global layout width */}
+      <div className="px-4 py-6 space-y-4">
         {loading && (
           <>
             <TemplateCardSkeleton />

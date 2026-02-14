@@ -158,7 +158,8 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-2xl rounded-t-2xl bg-[#0f1c2e] sm:rounded-2xl max-h-[90vh] flex flex-col">
+      {/* Modal container - matches global max-w-md */}
+      <div className="w-full max-w-md rounded-t-2xl bg-[#0f1c2e] sm:rounded-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-700 p-4">
           <h2 className="text-xl font-bold text-white">Select Exercise</h2>
