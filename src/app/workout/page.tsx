@@ -17,12 +17,15 @@ interface WorkoutTemplate {
   equipment: string[];
 }
 
+type DifficultyFilter = 'all' | 'beginner' | 'intermediate' | 'advanced';
+
 export default function WorkoutPickerPage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<DifficultyFilter>('all');
 
   useEffect(() => {
     async function fetchTemplates() {
@@ -66,7 +69,24 @@ export default function WorkoutPickerPage() {
     router.push(`/workout/${templateId}/preview`);
   };
 
-  const displayedTemplates = showAll ? templates : templates.slice(0, 3);
+  const handleFilterChange = (filter: DifficultyFilter) => {
+    setActiveFilter(filter);
+    setShowAll(false); // Reset expansion when filter changes
+  };
+
+  // Filter templates based on active filter
+  const filteredTemplates = activeFilter === 'all' 
+    ? templates 
+    : templates.filter(t => t.difficulty === activeFilter);
+
+  const displayedTemplates = showAll ? filteredTemplates : filteredTemplates.slice(0, 3);
+
+  const filterTabs: { value: DifficultyFilter; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'beginner', label: 'Beginner' },
+    { value: 'intermediate', label: 'Intermediate' },
+    { value: 'advanced', label: 'Advanced' },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,6 +103,25 @@ export default function WorkoutPickerPage() {
           <div className="flex items-center gap-2.5 flex-1">
             <LayoutGrid className="w-5 h-5 text-primary" />
             <h1 className="text-xl font-bold">Workout Templates</h1>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="px-4 pb-3 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2">
+            {filterTabs.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => handleFilterChange(tab.value)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  activeFilter === tab.value
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -110,16 +149,24 @@ export default function WorkoutPickerPage() {
           </div>
         )}
 
-        {!loading && !error && templates.length === 0 && (
+        {!loading && !error && filteredTemplates.length === 0 && (
           <div className="text-center py-16">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <LayoutGrid className="w-8 h-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground font-medium">No workout templates available yet.</p>
+            <p className="text-muted-foreground font-medium mb-2">
+              No {activeFilter !== 'all' && activeFilter} templates found
+            </p>
+            <button
+              onClick={() => setActiveFilter('all')}
+              className="text-sm text-primary hover:underline"
+            >
+              View all templates
+            </button>
           </div>
         )}
 
-        {!loading && !error && templates.length > 0 && (
+        {!loading && !error && filteredTemplates.length > 0 && (
           <>
             <div className="space-y-3">
               {displayedTemplates.map((template) => (
@@ -131,12 +178,12 @@ export default function WorkoutPickerPage() {
               ))}
             </div>
 
-            {!showAll && templates.length > 3 && (
+            {!showAll && filteredTemplates.length > 3 && (
               <button
                 onClick={() => setShowAll(true)}
                 className="w-full py-4 text-sm font-medium text-primary hover:text-primary/80 transition-colors border border-border rounded-xl hover:bg-muted/50"
               >
-                Show {templates.length - 3} more templates →
+                Show {filteredTemplates.length - 3} more templates →
               </button>
             )}
           </>
