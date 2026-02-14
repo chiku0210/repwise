@@ -21,7 +21,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {/* Global Width Constraint - Mobile-first PWA */}
+        <div className="mx-auto max-w-md min-h-screen bg-background relative">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
