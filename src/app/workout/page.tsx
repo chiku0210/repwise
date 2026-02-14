@@ -24,7 +24,6 @@ export default function WorkoutPickerPage() {
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
   const [activeFilter, setActiveFilter] = useState<DifficultyFilter>('all');
 
   useEffect(() => {
@@ -69,17 +68,10 @@ export default function WorkoutPickerPage() {
     router.push(`/workout/${templateId}/preview`);
   };
 
-  const handleFilterChange = (filter: DifficultyFilter) => {
-    setActiveFilter(filter);
-    setShowAll(false); // Reset expansion when filter changes
-  };
-
   // Filter templates based on active filter
   const filteredTemplates = activeFilter === 'all' 
     ? templates 
     : templates.filter(t => t.difficulty === activeFilter);
-
-  const displayedTemplates = showAll ? filteredTemplates : filteredTemplates.slice(0, 3);
 
   const filterTabs: { value: DifficultyFilter; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -112,7 +104,7 @@ export default function WorkoutPickerPage() {
             {filterTabs.map((tab) => (
               <button
                 key={tab.value}
-                onClick={() => handleFilterChange(tab.value)}
+                onClick={() => setActiveFilter(tab.value)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   activeFilter === tab.value
                     ? 'bg-primary text-primary-foreground shadow-sm'
@@ -167,26 +159,15 @@ export default function WorkoutPickerPage() {
         )}
 
         {!loading && !error && filteredTemplates.length > 0 && (
-          <>
-            <div className="space-y-3">
-              {displayedTemplates.map((template) => (
-                <TemplateCard
-                  key={template.id}
-                  template={template}
-                  onSelect={handleTemplateSelect}
-                />
-              ))}
-            </div>
-
-            {!showAll && filteredTemplates.length > 3 && (
-              <button
-                onClick={() => setShowAll(true)}
-                className="w-full py-4 text-sm font-medium text-primary hover:text-primary/80 transition-colors border border-border rounded-xl hover:bg-muted/50"
-              >
-                Show {filteredTemplates.length - 3} more templates →
-              </button>
-            )}
-          </>
+          <div className="space-y-3">
+            {filteredTemplates.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onSelect={handleTemplateSelect}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
