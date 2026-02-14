@@ -104,20 +104,23 @@ export default function WorkoutPickerPage() {
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="px-4 pb-3 overflow-x-auto scrollbar-hide">
-          <div className="flex gap-2">
+        {/* Filter Tabs - Pill Style */}
+        <div className="px-4 pb-3">
+          <div className="inline-flex p-1 space-x-1 bg-muted/50 rounded-xl">
             {filterTabs.map((tab) => {
               const isActive = activeFilter === tab.value;
               return (
                 <button
                   key={tab.value}
                   onClick={() => setActiveFilter(tab.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground shadow-sm ring-2 ring-muted ring-offset-2 ring-offset-background'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
-                  }`}
+                  className={`
+                    relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg whitespace-nowrap
+                    ${
+                      isActive
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }
+                  `}
                 >
                   {tab.label}
                 </button>
