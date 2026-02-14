@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { TemplateCard } from '@/components/workout/TemplateCard';
 import { TemplateCardSkeleton } from '@/components/workout/TemplateCardSkeleton';
 
