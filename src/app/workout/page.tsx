@@ -106,7 +106,7 @@ export default function WorkoutPickerPage() {
 
         {/* Filter Tabs - Pill Style */}
         <div className="px-4 pb-3">
-          <div className="inline-flex p-1 space-x-1 bg-muted/50 rounded-xl">
+          <div className="flex p-1 space-x-1 bg-card/50 border border-border/50 rounded-xl">
             {filterTabs.map((tab) => {
               const isActive = activeFilter === tab.value;
               return (
@@ -114,10 +114,10 @@ export default function WorkoutPickerPage() {
                   key={tab.value}
                   onClick={() => setActiveFilter(tab.value)}
                   className={`
-                    relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg whitespace-nowrap
+                    flex-1 px-3 py-2 text-sm font-medium transition-all duration-200 rounded-lg whitespace-nowrap
                     ${
                       isActive
-                        ? 'bg-background text-foreground shadow-sm'
+                        ? 'bg-primary text-primary-foreground shadow-md'
                         : 'text-muted-foreground hover:text-foreground'
                     }
                   `}
