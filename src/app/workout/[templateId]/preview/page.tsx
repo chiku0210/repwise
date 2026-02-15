@@ -134,6 +134,7 @@ export default function TemplatePreviewPage() {
               {/* Description */}
               <div className="space-y-2">
                 <div className="h-4 bg-gray-700/30 rounded w-full animate-pulse"></div>
+                <div className="h-4 bg-gray-700/30 rounded w-full animate-pulse"></div>
                 <div className="h-4 bg-gray-700/30 rounded w-5/6 animate-pulse"></div>
               </div>
 
@@ -150,12 +151,13 @@ export default function TemplatePreviewPage() {
               <div className="h-6 bg-gray-700/40 rounded w-24 animate-pulse"></div>
               
               {/* Exercise Cards Skeleton */}
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="rounded-lg p-4 bg-background border border-gray-700 animate-pulse">
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-700/50"></div>
                     <div className="flex-1 space-y-2">
                       <div className="h-5 bg-gray-700/50 rounded w-2/3"></div>
+                      <div className="h-3 bg-gray-700/50 rounded w-2/3"></div>
                       <div className="flex items-center gap-3">
                         <div className="h-3 bg-gray-700/40 rounded w-20"></div>
                         <div className="w-1 h-1 bg-gray-700/40 rounded-full"></div>

@@ -46,7 +46,7 @@ export function ExercisePreviewCard({ exercise, index }: ExercisePreviewCardProp
             <div className="flex items-center gap-1">
               <Repeat className="w-3.5 h-3.5" />
               <span>
-                {exercise.target_sets} × {exercise.reps_range}
+                {exercise.target_sets} Sets × {exercise.reps_range} Reps
               </span>
             </div>
             <span>•</span>
