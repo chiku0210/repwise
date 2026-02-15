@@ -6,9 +6,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#020617', // deep slate
-        foreground: '#e5e7eb',
-        card: '#020617',
+        background: '#0a1628', // Dark navy - main background
+        foreground: '#e5e7eb', // Light gray - main text
+        card: '#0f1e33', // Lighter navy - cards and elevated surfaces
         'card-foreground': '#e5e7eb',
         border: '#1f2937',
         muted: '#0f172a',
