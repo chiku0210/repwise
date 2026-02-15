@@ -95,7 +95,7 @@ export default function WorkoutPlayerPage() {
               equipment_type: details?.equipment_type,
             };
           })
-          .sort((a, b) => a.order_index - b.order_index);
+          .sort((a: { order_index: number; }, b: { order_index: number; }) => a.order_index - b.order_index);
 
         setExercises(enrichedExercises);
 
