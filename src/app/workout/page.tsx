@@ -109,13 +109,13 @@ export default function WorkoutPickerPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a1628]">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+      <div className="sticky top-0 z-10 bg-[#0a1628]/95 backdrop-blur-sm border-b border-gray-700">
         <div className="px-4 py-4 flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Go back"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -135,7 +135,7 @@ export default function WorkoutPickerPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search templates..."
-              className="w-full rounded-lg bg-[#0a1628] py-3 pl-10 pr-4 text-white placeholder-gray-400 outline-none ring-1 ring-gray-700 focus:ring-2 focus:ring-blue-500 transition-all"
+              className="w-full rounded-lg bg-[#0f1e33] py-3 pl-10 pr-4 text-white placeholder-gray-400 outline-none ring-1 ring-gray-700 focus:ring-2 focus:ring-blue-500 transition-all"
               disabled={loading || !!error}
             />
           </div>
@@ -143,7 +143,7 @@ export default function WorkoutPickerPage() {
 
         {/* Filter Tabs - Pill Style */}
         <div className="px-4 pb-3">
-          <div className="flex p-1 space-x-1 bg-muted/30 rounded-xl">
+          <div className="flex p-1 space-x-1 bg-gray-800/30 rounded-xl">
             {filterTabs.map((tab) => {
               const isActive = activeFilter === tab.value;
               return (
@@ -198,10 +198,10 @@ export default function WorkoutPickerPage() {
 
         {!loading && !error && filteredTemplates.length === 0 && (
           <div className="text-center py-16">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <LayoutGrid className="w-8 h-8 text-muted-foreground" />
+            <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LayoutGrid className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-muted-foreground font-medium mb-2">
+            <p className="text-gray-400 font-medium mb-2">
               No {activeFilter !== 'all' && activeFilter} templates found
             </p>
             {searchQuery && (
