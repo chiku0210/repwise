@@ -29,11 +29,10 @@ export default function DashboardPage() {
               <Button 
                 size="lg" 
                 className="h-14 w-full text-lg"
-                disabled
+                onClick={() => router.push('/workout')}
               >
                 <Dumbbell className="mr-2 h-5 w-5" />
                 Start Workout
-                <span className="ml-2 rounded-full bg-gray-700 px-2 py-0.5 text-xs">Soon</span>
               </Button>
               <Button 
                 variant="outline" 
