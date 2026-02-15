@@ -267,7 +267,7 @@ export default function WorkoutSummaryPage() {
 
           {/* Done Button */}
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/log')}
             className="w-full bg-gradient-to-r from-green-600 to-green-500 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:from-green-500 hover:to-green-600 transition-all active:scale-[0.98] shadow-lg shadow-green-500/25"
           >
             Done
