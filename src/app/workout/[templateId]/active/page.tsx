@@ -10,6 +10,7 @@ import { ExerciseHeader } from '@/components/workout/ExerciseHeader';
 import { FormCuesCollapsible } from '@/components/workout/FormCuesCollapsible';
 import { SetInputForm } from '@/components/workout/SetInputForm';
 import { LoggedSetItem } from '@/components/workout/LoggedSetItem';
+import { RestTimer } from '@/components/workout/RestTimer';
 import ConfirmDialog from '@/components/confirm-dialog';
 
 interface Exercise {
@@ -53,6 +54,9 @@ export default function WorkoutPlayerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [workoutSessionId, setWorkoutSessionId] = useState<string | null>(null);
   const [workoutExerciseIds, setWorkoutExerciseIds] = useState<Record<string, string>>({});
+  
+  // Rest timer state
+  const [showRestTimer, setShowRestTimer] = useState(false);
   
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
@@ -225,13 +229,25 @@ export default function WorkoutPlayerPage() {
       if (setError) throw setError;
 
       // Update local state
+      const newSets = [
+        ...currentSets,
+        { id: data.id, set_number: setNumber, ...setData },
+      ];
+      
       setCompletedSets(prev => ({
         ...prev,
-        [currentExerciseIndex]: [
-          ...currentSets,
-          { id: data.id, set_number: setNumber, ...setData },
-        ],
+        [currentExerciseIndex]: newSets,
       }));
+
+      // Show rest timer if:
+      // 1. Not the last set of target sets AND
+      // 2. Not the last exercise OR not all sets completed
+      const isLastExercise = currentExerciseIndex === exercises.length - 1;
+      const reachedTargetSets = setNumber >= currentExercise.target_sets;
+      
+      if (!reachedTargetSets || !isLastExercise) {
+        setShowRestTimer(true);
+      }
 
     } catch (err) {
       console.error('Error logging set:', err);
@@ -239,6 +255,11 @@ export default function WorkoutPlayerPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Handle rest timer completion/skip
+  const handleRestTimerClose = () => {
+    setShowRestTimer(false);
   };
 
   // Handle set deletion
@@ -495,6 +516,14 @@ export default function WorkoutPlayerPage() {
           </div>
         </div>
       </div>
+
+      {/* Rest Timer */}
+      <RestTimer
+        isOpen={showRestTimer}
+        restSeconds={currentExercise.rest_seconds}
+        onComplete={handleRestTimerClose}
+        onSkip={handleRestTimerClose}
+      />
 
       {/* Confirmation Dialog */}
       <ConfirmDialog
