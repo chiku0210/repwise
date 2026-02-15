@@ -10,6 +10,7 @@ import { ExerciseHeader } from '@/components/workout/ExerciseHeader';
 import { FormCuesCollapsible } from '@/components/workout/FormCuesCollapsible';
 import { SetInputForm } from '@/components/workout/SetInputForm';
 import { LoggedSetItem } from '@/components/workout/LoggedSetItem';
+import ConfirmDialog from '@/components/confirm-dialog';
 
 interface Exercise {
   exercise_id: string;
@@ -31,6 +32,14 @@ interface WorkoutSet {
   rpe: number;
 }
 
+interface ConfirmDialogState {
+  show: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  variant?: 'danger' | 'warning' | 'info';
+}
+
 export default function WorkoutPlayerPage() {
   const router = useRouter();
   const params = useParams();
@@ -44,6 +53,14 @@ export default function WorkoutPlayerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [workoutSessionId, setWorkoutSessionId] = useState<string | null>(null);
   const [workoutExerciseIds, setWorkoutExerciseIds] = useState<Record<string, string>>({});
+  
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   // Fetch template and create workout session
   useEffect(() => {
@@ -218,7 +235,7 @@ export default function WorkoutPlayerPage() {
 
     } catch (err) {
       console.error('Error logging set:', err);
-      alert('Failed to log set. Please try again.');
+      setError('Failed to log set. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -226,33 +243,42 @@ export default function WorkoutPlayerPage() {
 
   // Handle set deletion
   const handleDeleteSet = async (setId: string) => {
-    if (!confirm('Delete this set?')) return;
     if (typeof window === 'undefined') return;
 
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from('exercise_sets')
-        .delete()
-        .eq('id', setId);
+    setConfirmDialog({
+      show: true,
+      title: 'Delete Set',
+      message: 'Are you sure you want to delete this set?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const supabase = getSupabaseBrowserClient();
+          const { error } = await supabase
+            .from('exercise_sets')
+            .delete()
+            .eq('id', setId);
 
-      if (error) throw error;
+          if (error) throw error;
 
-      // Update local state
-      const currentSets = completedSets[currentExerciseIndex] || [];
-      const updatedSets = currentSets
-        .filter(s => s.id !== setId)
-        .map((s, idx) => ({ ...s, set_number: idx + 1 }));
+          // Update local state
+          const currentSets = completedSets[currentExerciseIndex] || [];
+          const updatedSets = currentSets
+            .filter(s => s.id !== setId)
+            .map((s, idx) => ({ ...s, set_number: idx + 1 }));
 
-      setCompletedSets(prev => ({
-        ...prev,
-        [currentExerciseIndex]: updatedSets,
-      }));
+          setCompletedSets(prev => ({
+            ...prev,
+            [currentExerciseIndex]: updatedSets,
+          }));
 
-    } catch (err) {
-      console.error('Error deleting set:', err);
-      alert('Failed to delete set.');
-    }
+        } catch (err) {
+          console.error('Error deleting set:', err);
+          setError('Failed to delete set.');
+        } finally {
+          setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+        }
+      },
+    });
   };
 
   // Handle next exercise
@@ -267,13 +293,20 @@ export default function WorkoutPlayerPage() {
 
   // Handle "Complete Later" (skip to end)
   const handleCompleteLater = () => {
-    if (!confirm('Move this exercise to the end?')) return;
-
-    // Move current exercise to end
-    const newExercises = [...exercises];
-    const [removed] = newExercises.splice(currentExerciseIndex, 1);
-    newExercises.push(removed);
-    setExercises(newExercises);
+    setConfirmDialog({
+      show: true,
+      title: 'Move to End',
+      message: 'Move this exercise to the end of your workout?',
+      variant: 'info',
+      onConfirm: () => {
+        // Move current exercise to end
+        const newExercises = [...exercises];
+        const [removed] = newExercises.splice(currentExerciseIndex, 1);
+        newExercises.push(removed);
+        setExercises(newExercises);
+        setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+      },
+    });
   };
 
   // Handle finish workout
@@ -307,8 +340,22 @@ export default function WorkoutPlayerPage() {
 
     } catch (err) {
       console.error('Error finishing workout:', err);
-      alert('Failed to finish workout.');
+      setError('Failed to finish workout.');
     }
+  };
+
+  // Handle back button (exit workout)
+  const handleBackClick = () => {
+    setConfirmDialog({
+      show: true,
+      title: 'Exit Workout',
+      message: 'Your progress will be saved. You can resume later from your workout history.',
+      variant: 'warning',
+      onConfirm: () => {
+        setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+        router.push('/');
+      },
+    });
   };
 
   if (loading) {
@@ -322,11 +369,11 @@ export default function WorkoutPlayerPage() {
     );
   }
 
-  if (error || exercises.length === 0) {
+  if (error && exercises.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <p className="text-red-400 mb-4 text-sm">{error || 'No exercises found'}</p>
+          <p className="text-red-400 mb-4 text-sm">{error}</p>
           <button
             onClick={() => router.back()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg"
@@ -349,11 +396,7 @@ export default function WorkoutPlayerPage() {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-gray-700">
         <div className="px-4 py-3 flex items-center justify-between">
           <button
-            onClick={() => {
-              if (confirm('Exit workout? Progress will be saved.')) {
-                router.push('/dashboard');
-              }
-            }}
+            onClick={handleBackClick}
             className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -362,6 +405,13 @@ export default function WorkoutPlayerPage() {
           <div className="w-9" />
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="mx-4 mt-4 rounded-lg bg-red-900/20 border border-red-800 p-4">
+          <p className="text-sm text-red-400 text-center">{error}</p>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto pb-20">
@@ -445,6 +495,16 @@ export default function WorkoutPlayerPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        show={confirmDialog.show}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} })}
+        variant={confirmDialog.variant}
+      />
 
       <BottomNav />
     </div>
