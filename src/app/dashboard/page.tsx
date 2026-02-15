@@ -13,7 +13,7 @@ export default function DashboardPage() {
 
   return (
     <AuthGate>
-      <div className="flex min-h-screen flex-col bg-[#0a1628]">
+      <div className="flex min-h-screen flex-col bg-background">
         <main className="flex-1">
           <div className="mx-auto max-w-md space-y-6 p-6">
             <div className="space-y-4 text-center">
@@ -49,7 +49,7 @@ export default function DashboardPage() {
         </main>
 
         {/* Footer with Privacy Policy link - positioned above BottomNav */}
-        <footer className="border-t border-gray-800 bg-[#0f1e33] px-4 py-3 pb-24">
+        <footer className="border-t border-gray-800 bg-card px-4 py-3 pb-24">
           <div className="mx-auto max-w-md text-center">
             <p className="text-xs text-gray-400">
               © 2025 Repwise
