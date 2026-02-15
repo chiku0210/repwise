@@ -107,15 +107,74 @@ export default function TemplatePreviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-gray-700 px-4 py-3">
-          <div className="h-6 bg-gray-700/50 rounded w-1/2 animate-pulse"></div>
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Header Skeleton */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-gray-700">
+          <div className="px-4 py-3 flex items-center gap-3">
+            <div className="w-9 h-9 bg-gray-700/30 rounded-lg animate-pulse"></div>
+            <div className="h-5 bg-gray-700/30 rounded w-20 animate-pulse"></div>
+          </div>
         </div>
-        <div className="p-4 space-y-4">
-          <div className="h-32 bg-gray-700/30 rounded-xl animate-pulse"></div>
-          <div className="h-24 bg-gray-700/30 rounded-xl animate-pulse"></div>
-          <div className="h-24 bg-gray-700/30 rounded-xl animate-pulse"></div>
+
+        {/* Content Skeleton */}
+        <div className="flex-1 overflow-y-auto pb-32">
+          <div className="p-4 space-y-4">
+            {/* Template Info Skeleton */}
+            <div className="space-y-3">
+              {/* Title */}
+              <div className="h-8 bg-gray-700/50 rounded w-3/4 animate-pulse"></div>
+              
+              {/* Badges row */}
+              <div className="flex items-center gap-3">
+                <div className="h-6 bg-gray-700/40 rounded-full w-20 animate-pulse"></div>
+                <div className="h-4 bg-gray-700/30 rounded w-16 animate-pulse"></div>
+                <div className="h-4 bg-gray-700/30 rounded w-20 animate-pulse"></div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-700/30 rounded w-full animate-pulse"></div>
+                <div className="h-4 bg-gray-700/30 rounded w-5/6 animate-pulse"></div>
+              </div>
+
+              {/* Equipment */}
+              <div className="flex items-center gap-2">
+                <div className="h-4 bg-gray-700/30 rounded w-20 animate-pulse"></div>
+                <div className="h-6 bg-gray-700/30 rounded-full w-16 animate-pulse"></div>
+                <div className="h-6 bg-gray-700/30 rounded-full w-12 animate-pulse"></div>
+              </div>
+            </div>
+
+            {/* Exercises Section */}
+            <div className="space-y-3 pt-4">
+              <div className="h-6 bg-gray-700/40 rounded w-24 animate-pulse"></div>
+              
+              {/* Exercise Cards Skeleton */}
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-lg p-4 bg-background border border-gray-700 animate-pulse">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gray-700/50"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-5 bg-gray-700/50 rounded w-2/3"></div>
+                      <div className="flex items-center gap-3">
+                        <div className="h-3 bg-gray-700/40 rounded w-20"></div>
+                        <div className="w-1 h-1 bg-gray-700/40 rounded-full"></div>
+                        <div className="h-3 bg-gray-700/40 rounded w-24"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* Bottom Button Skeleton */}
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-gray-800">
+          <div className="w-full h-14 bg-gray-700/30 rounded-xl animate-pulse"></div>
+        </div>
+
+        <BottomNav />
       </div>
     );
   }
