@@ -17,10 +17,13 @@ interface ExercisePreviewCardProps {
 
 export function ExercisePreviewCard({ exercise, index }: ExercisePreviewCardProps) {
   const formatRestTime = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 60) return `${seconds} sec`;
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+    if (remainingSeconds > 0) {
+      return `${minutes} min ${remainingSeconds} sec`;
+    }
+    return `${minutes} min`;
   };
 
   return (
