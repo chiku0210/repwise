@@ -16,7 +16,7 @@ interface WorkoutWithDetails {
   id: string;
   workout_name: string;
   started_at: string;
-  completed_at: string;
+  completed_at: string | null;  // Can be null for incomplete workouts
   duration: number;
   total_sets: number;
   total_reps: number;
@@ -58,7 +58,7 @@ type SupabaseWorkoutSession = {
   id: string;
   workout_name: string;
   started_at: string;
-  completed_at: string;
+  completed_at: string | null;
   total_sets: number;
   total_reps: number;
   total_volume_kg: number;
@@ -95,10 +95,12 @@ export default function LogPage() {
       workout_name: session.workout_name,
       started_at: session.started_at,
       completed_at: session.completed_at,
-      duration: calculateDuration(session.started_at, session.completed_at),
-      total_sets: session.total_sets,
-      total_reps: session.total_reps,
-      total_volume_kg: session.total_volume_kg,
+      duration: session.completed_at 
+        ? calculateDuration(session.started_at, session.completed_at)
+        : 0,  // Duration is 0 for incomplete workouts
+      total_sets: session.total_sets || 0,
+      total_reps: session.total_reps || 0,
+      total_volume_kg: session.total_volume_kg || 0,
       exercises,
     };
   };
@@ -149,8 +151,7 @@ export default function LogPage() {
           )
         `)
         .eq('user_id', user.id)
-        .not('completed_at', 'is', null)
-        .order('completed_at', { ascending: false })
+        .order('started_at', { ascending: false })  // Order by started_at instead of completed_at
         .range(startRange, endRange)
         .returns<SupabaseWorkoutSession[]>();
 
