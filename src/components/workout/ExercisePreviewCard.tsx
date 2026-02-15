@@ -24,33 +24,34 @@ export function ExercisePreviewCard({ exercise, index }: ExercisePreviewCardProp
   };
 
   return (
-    <div className="bg-card border border-border rounded-xl p-4">
+    <div className="rounded-lg p-4 bg-background border border-gray-700">
       {/* Exercise Header */}
-      <div className="flex items-start gap-3 mb-3">
-        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold flex-shrink-0">
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm font-semibold flex-shrink-0">
           {index + 1}
         </div>
-        <div className="flex-1">
-          <h4 className="font-semibold text-foreground mb-1">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-white mb-1">
             {exercise.exercise_name}
           </h4>
           {exercise.notes && (
-            <p className="text-xs text-muted-foreground">{exercise.notes}</p>
+            <p className="text-xs text-gray-400 mb-2">{exercise.notes}</p>
           )}
-        </div>
-      </div>
-
-      {/* Exercise Details */}
-      <div className="flex items-center gap-4 text-sm">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Repeat className="w-4 h-4" />
-          <span>
-            {exercise.target_sets} × {exercise.reps_range}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Timer className="w-4 h-4" />
-          <span>{formatRestTime(exercise.rest_seconds)} rest</span>
+          
+          {/* Exercise Details */}
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Repeat className="w-3.5 h-3.5" />
+              <span>
+                {exercise.target_sets} × {exercise.reps_range}
+              </span>
+            </div>
+            <span>•</span>
+            <div className="flex items-center gap-1">
+              <Timer className="w-3.5 h-3.5" />
+              <span>{formatRestTime(exercise.rest_seconds)} rest</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
