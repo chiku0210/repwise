@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, SkipForward } from 'lucide-react';
+import { SkipForward } from 'lucide-react';
 
 interface RestTimerProps {
   isOpen: boolean;
@@ -56,15 +56,8 @@ export function RestTimer({ isOpen, restSeconds, onComplete, onSkip }: RestTimer
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-gray-900 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-sm animate-in zoom-in-95 duration-200">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <div className="flex items-center justify-center p-4 border-b border-gray-700">
             <h2 className="text-lg font-bold text-white">Rest Time</h2>
-            <button
-              onClick={onSkip}
-              className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
           </div>
 
           {/* Timer Display */}
