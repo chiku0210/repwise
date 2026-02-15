@@ -213,8 +213,8 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
           </div>
         </div>
 
-        {/* Exercise List */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Exercise List - Added pb-20 to clear BottomNav */}
+        <div className="flex-1 overflow-y-auto p-4 pb-20">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
