@@ -16,7 +16,13 @@ export function BottomNav() {
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {
-      return pathname === '/' || pathname === '/dashboard';
+      // Today includes: dashboard (home), workout flows, and quick-log
+      return (
+        pathname === '/' || 
+        pathname === '/dashboard' || 
+        pathname.startsWith('/workout') || 
+        pathname.startsWith('/quick-log')
+      );
     }
     return pathname.startsWith(href);
   };
