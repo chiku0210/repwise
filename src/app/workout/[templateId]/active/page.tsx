@@ -330,6 +330,38 @@ export default function WorkoutPlayerPage() {
     });
   };
 
+  // Save workout progress (without completing)
+  const saveWorkoutProgress = async () => {
+    if (!workoutSessionId || typeof window === 'undefined') return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Calculate totals from completed sets
+      const allSets = Object.values(completedSets).flat();
+      const totalSets = allSets.length;
+      const totalReps = allSets.reduce((sum, set) => sum + set.reps, 0);
+      const totalVolume = allSets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
+
+      // Update session WITHOUT completed_at (workout still in progress)
+      const { error } = await supabase
+        .from('workout_sessions')
+        .update({
+          total_sets: totalSets,
+          total_reps: totalReps,
+          total_volume_kg: totalVolume,
+        })
+        .eq('id', workoutSessionId);
+
+      if (error) throw error;
+
+      console.log('Workout progress saved:', { totalSets, totalReps, totalVolume });
+    } catch (err) {
+      console.error('Error saving workout progress:', err);
+      // Don't block navigation even if save fails
+    }
+  };
+
   // Handle finish workout
   const handleFinishWorkout = async () => {
     if (!workoutSessionId || typeof window === 'undefined') return;
@@ -343,7 +375,7 @@ export default function WorkoutPlayerPage() {
       const totalReps = allSets.reduce((sum, set) => sum + set.reps, 0);
       const totalVolume = allSets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
 
-      // Update session
+      // Update session WITH completed_at (workout finished)
       const { error } = await supabase
         .from('workout_sessions')
         .update({
@@ -372,8 +404,12 @@ export default function WorkoutPlayerPage() {
       title: 'Exit Workout',
       message: 'Your progress will be saved. You can resume later from your workout history.',
       variant: 'warning',
-      onConfirm: () => {
+      onConfirm: async () => {
         setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+        
+        // Save progress before exiting
+        await saveWorkoutProgress();
+        
         router.push('/');
       },
     });
