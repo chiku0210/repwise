@@ -76,7 +76,7 @@ export default function TemplatePreviewPage() {
         }));
 
         // Sort by order_index
-        enrichedExercises.sort((a, b) => a.order_index - b.order_index);
+        enrichedExercises.sort((a: { order_index: number; }, b: { order_index: number; }) => a.order_index - b.order_index);
 
         setTemplate({
           id: templateData.id,
