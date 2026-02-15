@@ -117,7 +117,7 @@ export default function TemplatePreviewPage() {
         </div>
 
         {/* Content Skeleton */}
-        <div className="flex-1 overflow-y-auto pb-32">
+        <div className="flex-1 overflow-y-auto pb-40">
           <div className="p-4 space-y-4">
             {/* Template Info Skeleton */}
             <div className="space-y-3">
@@ -170,7 +170,7 @@ export default function TemplatePreviewPage() {
         </div>
 
         {/* Bottom Button Skeleton */}
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-gray-800">
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-gray-800">
           <div className="w-full h-14 bg-gray-700/30 rounded-xl animate-pulse"></div>
         </div>
 
@@ -211,8 +211,8 @@ export default function TemplatePreviewPage() {
         </div>
       </div>
 
-      {/* Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto pb-32">
+      {/* Content - Scrollable with extra padding at bottom */}
+      <div className="flex-1 overflow-y-auto pb-40">
         {/* Template Info */}
         <div className="p-4 space-y-4">
           <div className="space-y-3">
@@ -263,13 +263,13 @@ export default function TemplatePreviewPage() {
         </div>
       </div>
 
-      {/* Fixed Bottom Button - Above BottomNav */}
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-gray-800">
+      {/* Fixed Bottom CTA - Strong and prominent */}
+      <div className="fixed bottom-16 left-0 right-0 bg-gradient-to-t from-background via-background to-transparent pt-6 pb-4 px-4">
         <button
           onClick={handleStartWorkout}
-          className="w-full py-4 bg-primary text-white font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors active:scale-[0.98]"
+          className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold text-lg rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:from-blue-500 hover:to-blue-600 transition-all active:scale-[0.98]"
         >
-          <Play className="w-5 h-5" fill="currentColor" />
+          <Play className="w-6 h-6" fill="currentColor" />
           Start Workout
         </button>
       </div>
