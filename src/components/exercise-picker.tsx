@@ -26,7 +26,7 @@ interface ExercisePickerProps {
   onClose: () => void;
 }
 
-const MUSCLE_GROUPS = ['Push', 'Pull', 'Legs', 'Core', 'All'];
+const MUSCLE_GROUPS = ['All', 'Push', 'Pull', 'Legs', 'Core'];
 
 export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProps) {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -158,7 +158,8 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-2xl rounded-t-2xl bg-[#0f1c2e] sm:rounded-2xl max-h-[90vh] flex flex-col">
+      {/* Modal container - matches global max-w-md */}
+      <div className="w-full max-w-md rounded-t-2xl bg-[#0f1c2e] sm:rounded-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-700 p-4">
           <h2 className="text-xl font-bold text-white">Select Exercise</h2>
@@ -186,23 +187,29 @@ export default function ExercisePicker({ onSelect, onClose }: ExercisePickerProp
           </div>
         </div>
 
-        {/* Muscle Group Filter */}
+        {/* Muscle Group Filter - Pill Style (matching template picker) */}
         <div className="border-b border-gray-700 p-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {MUSCLE_GROUPS.map((group) => (
-              <button
-                key={group}
-                onClick={() => setSelectedMuscleGroup(group)}
-                disabled={loading || !!error}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                  selectedMuscleGroup === group
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                }`}
-              >
-                {group}
-              </button>
-            ))}
+          <div className="flex p-1 space-x-1 bg-muted/30 rounded-xl">
+            {MUSCLE_GROUPS.map((group) => {
+              const isActive = selectedMuscleGroup === group;
+              return (
+                <button
+                  key={group}
+                  onClick={() => setSelectedMuscleGroup(group)}
+                  disabled={loading || !!error}
+                  className={`
+                    flex-1 px-3 py-2.5 text-sm font-semibold transition-all duration-200 rounded-lg whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed
+                    ${
+                      isActive
+                        ? 'bg-white text-zinc-900 shadow-lg'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }
+                  `}
+                >
+                  {group}
+                </button>
+              );
+            })}
           </div>
         </div>
 

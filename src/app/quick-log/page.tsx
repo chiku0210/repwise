@@ -418,8 +418,8 @@ export default function QuickLogPage() {
         </div>
       )}
 
-      {/* Main Content - Mobile First */}
-      <div className="w-full max-w-2xl mx-auto px-4 py-4 space-y-4">
+      {/* Main Content - Removed max-w-2xl, using global layout width */}
+      <div className="w-full px-4 py-4 space-y-4">
         {!selectedExercise ? (
           // Empty state - show when no exercise selected
           <div className="mt-20 text-center">
