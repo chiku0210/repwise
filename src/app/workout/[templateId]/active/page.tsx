@@ -59,6 +59,8 @@ export default function WorkoutPlayerPage() {
           return;
         }
 
+        console.log('User authenticated:', user.id);
+
         // Fetch template with exercises
         const { data: templateData, error: templateError } = await supabase
           .from('templates')
@@ -66,8 +68,13 @@ export default function WorkoutPlayerPage() {
           .eq('id', templateId)
           .single();
 
-        if (templateError) throw templateError;
+        if (templateError) {
+          console.error('Template error:', templateError);
+          throw new Error(`Template error: ${templateError.message}`);
+        }
         if (!templateData) throw new Error('Template not found');
+
+        console.log('Template loaded:', templateData.name);
 
         // Fetch exercise details
         const exerciseIds = templateData.exercises.map((ex: any) => ex.exercise_id);
@@ -76,7 +83,12 @@ export default function WorkoutPlayerPage() {
           .select('id, name, equipment_type, form_cues')
           .in('id', exerciseIds);
 
-        if (exerciseError) throw exerciseError;
+        if (exerciseError) {
+          console.error('Exercise error:', exerciseError);
+          throw new Error(`Exercise error: ${exerciseError.message}`);
+        }
+
+        console.log('Exercises loaded:', exerciseDetails?.length);
 
         // Enrich exercises with details
         const exerciseMap = new Map(exerciseDetails?.map(ex => [ex.id, ex]) || []);
@@ -98,8 +110,10 @@ export default function WorkoutPlayerPage() {
           .sort((a: { order_index: number; }, b: { order_index: number; }) => a.order_index - b.order_index);
 
         setExercises(enrichedExercises);
+        console.log('Enriched exercises set:', enrichedExercises.length);
 
         // Create workout session
+        console.log('Creating workout session...');
         const { data: sessionData, error: sessionError } = await supabase
           .from('workout_sessions')
           .insert({
@@ -111,8 +125,14 @@ export default function WorkoutPlayerPage() {
           .select('id')
           .single();
 
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw new Error(`Session creation failed: ${sessionError.message} (Code: ${sessionError.code})`);
+        }
+        if (!sessionData) throw new Error('Session created but no data returned');
+
         setWorkoutSessionId(sessionData.id);
+        console.log('Workout session created:', sessionData.id);
 
         // Create workout_exercises records
         const workoutExercises = enrichedExercises.map((ex, index) => ({
@@ -122,12 +142,18 @@ export default function WorkoutPlayerPage() {
           target_sets: ex.target_sets,
         }));
 
+        console.log('Inserting workout exercises:', workoutExercises.length);
         const { data: workoutExData, error: workoutExError } = await supabase
           .from('workout_exercises')
           .insert(workoutExercises)
           .select('id, exercise_id');
 
-        if (workoutExError) throw workoutExError;
+        if (workoutExError) {
+          console.error('Workout exercises error:', workoutExError);
+          throw new Error(`Workout exercises insert failed: ${workoutExError.message} (Code: ${workoutExError.code})`);
+        }
+
+        console.log('Workout exercises created:', workoutExData?.length);
 
         // Map exercise_id to workout_exercise_id
         const idMap: Record<string, string> = {};
@@ -136,9 +162,13 @@ export default function WorkoutPlayerPage() {
         });
         setWorkoutExerciseIds(idMap);
 
-      } catch (err) {
+        console.log('Initialization complete!');
+
+      } catch (err: any) {
         console.error('Error initializing workout:', err);
-        setError(err instanceof Error ? err.message : 'Failed to start workout');
+        console.error('Error details:', JSON.stringify(err, null, 2));
+        const errorMessage = err?.message || err?.toString() || 'Failed to start workout';
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -295,8 +325,8 @@ export default function WorkoutPlayerPage() {
   if (error || exercises.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">{error || 'No exercises found'}</p>
+        <div className="text-center max-w-md">
+          <p className="text-red-400 mb-4 text-sm">{error || 'No exercises found'}</p>
           <button
             onClick={() => router.back()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg"
