@@ -10,7 +10,7 @@ interface WorkoutCardProps {
     id: string;
     workout_name: string;
     started_at: string;
-    completed_at: string;
+    completed_at: string | null;  // Can be null for incomplete workouts
     duration: number;
     total_sets: number;
     total_reps: number;
@@ -31,9 +31,10 @@ interface WorkoutCardProps {
 export default function WorkoutCard({ workout }: WorkoutCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const isIncomplete = !workout.completed_at;
   const exerciseNames = workout.exercises.map((ex) => ex.name);
-  const formattedDate = formatWorkoutDate(workout.completed_at);
-  const formattedTime = formatTime(workout.completed_at);
+  const formattedDate = formatWorkoutDate(workout.completed_at || workout.started_at);
+  const formattedTime = formatTime(workout.completed_at || workout.started_at);
   const exerciseListText = formatExerciseList(exerciseNames, 3);
 
   return (
@@ -43,7 +44,7 @@ export default function WorkoutCard({ workout }: WorkoutCardProps) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-4 text-left transition-colors hover:bg-[#152235]"
       >
-        {/* Date and Time */}
+        {/* Date and Time with In Progress Badge */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-lg font-semibold text-white">
@@ -51,6 +52,11 @@ export default function WorkoutCard({ workout }: WorkoutCardProps) {
             </span>
             <span className="text-gray-500">•</span>
             <span className="text-gray-400">{formattedTime}</span>
+            {isIncomplete && (
+              <span className="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-900/30 text-yellow-400 border border-yellow-800">
+                In Progress
+              </span>
+            )}
           </div>
           {isExpanded ? (
             <ChevronUp className="h-5 w-5 text-gray-400" />
@@ -61,17 +67,25 @@ export default function WorkoutCard({ workout }: WorkoutCardProps) {
 
         {/* Stats Row */}
         <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4" />
-            <span>{workout.duration} min</span>
-          </div>
-          <span>•</span>
+          {!isIncomplete && workout.duration > 0 && (
+            <>
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                <span>{workout.duration} min</span>
+              </div>
+              <span>•</span>
+            </>
+          )}
           <span>{workout.total_sets} sets</span>
-          <span>•</span>
-          <div className="flex items-center gap-1.5">
-            <TrendingUp className="h-4 w-4" />
-            <span>{workout.total_volume_kg.toLocaleString()} kg</span>
-          </div>
+          {workout.total_volume_kg > 0 && (
+            <>
+              <span>•</span>
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="h-4 w-4" />
+                <span>{workout.total_volume_kg.toLocaleString()} kg</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Exercise List */}
