@@ -13,7 +13,7 @@ export default function DashboardPage() {
 
   return (
     <AuthGate>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-[#0a1628]">
         <main className="flex-1">
           <div className="mx-auto max-w-md space-y-6 p-6">
             <div className="space-y-4 text-center">
