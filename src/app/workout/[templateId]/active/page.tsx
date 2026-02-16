@@ -221,6 +221,8 @@ export default function WorkoutPlayerPage() {
 
     setSubmitting(true);
     try {
+      let currentWorkoutExerciseIds = workoutExerciseIds;
+      
       // If no session exists, create it now (first set)
       if (!workoutSessionId) {
         const result = await createWorkoutSession();
@@ -228,12 +230,18 @@ export default function WorkoutPlayerPage() {
         
         setWorkoutSessionId(result.sessionId);
         setWorkoutExerciseIds(result.exerciseIds);
+        currentWorkoutExerciseIds = result.exerciseIds; // Use returned value immediately
         
         console.log('Session created on first set:', result.sessionId);
       }
 
       const currentExercise = exercises[currentExerciseIndex];
-      const workoutExerciseId = workoutExerciseIds[currentExercise.exercise_id];
+      const workoutExerciseId = currentWorkoutExerciseIds[currentExercise.exercise_id];
+      
+      if (!workoutExerciseId) {
+        throw new Error(`workout_exercise_id not found for exercise: ${currentExercise.exercise_id}`);
+      }
+      
       const currentSets = completedSets[currentExerciseIndex] || [];
       const setNumber = currentSets.length + 1;
 
@@ -430,7 +438,7 @@ export default function WorkoutPlayerPage() {
     // If no session created yet (no sets logged), just navigate back
     if (!workoutSessionId) {
       console.log('No sets logged, navigating back without confirmation');
-      router.push('/');
+      router.push('/workout'); // Navigate to workout template list
       return;
     }
 
@@ -446,7 +454,7 @@ export default function WorkoutPlayerPage() {
         // Save progress before exiting
         await saveWorkoutProgress();
         
-        router.push('/');
+        router.push('/'); // Navigate to home
       },
     });
   };
