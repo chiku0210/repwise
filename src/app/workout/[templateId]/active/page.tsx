@@ -47,6 +47,7 @@ export default function WorkoutPlayerPage() {
   const templateId = params.templateId as string;
 
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [templateName, setTemplateName] = useState<string>('');
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [completedSets, setCompletedSets] = useState<Record<number, WorkoutSet[]>>({});
   const [loading, setLoading] = useState(true);
@@ -66,7 +67,7 @@ export default function WorkoutPlayerPage() {
     onConfirm: () => {},
   });
 
-  // Fetch template and create workout session
+  // Fetch template (but don't create session yet)
   useEffect(() => {
     async function initializeWorkout() {
       if (typeof window === 'undefined') return;
@@ -96,6 +97,7 @@ export default function WorkoutPlayerPage() {
         if (!templateData) throw new Error('Template not found');
 
         console.log('Template loaded:', templateData.name);
+        setTemplateName(templateData.name);
 
         // Fetch exercise details
         const exerciseIds = templateData.exercises.map((ex: any) => ex.exercise_id);
@@ -132,58 +134,7 @@ export default function WorkoutPlayerPage() {
 
         setExercises(enrichedExercises);
         console.log('Enriched exercises set:', enrichedExercises.length);
-
-        // Create workout session
-        console.log('Creating workout session...');
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('workout_sessions')
-          .insert({
-            user_id: user.id,
-            template_id: templateId,
-            workout_name: templateData.name,
-            started_at: new Date().toISOString(),
-          })
-          .select('id')
-          .single();
-
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw new Error(`Session creation failed: ${sessionError.message} (Code: ${sessionError.code})`);
-        }
-        if (!sessionData) throw new Error('Session created but no data returned');
-
-        setWorkoutSessionId(sessionData.id);
-        console.log('Workout session created:', sessionData.id);
-
-        // Create workout_exercises records
-        const workoutExercises = enrichedExercises.map((ex, index) => ({
-          workout_id: sessionData.id,
-          exercise_id: ex.exercise_id,
-          order_index: index + 1,
-          target_sets: ex.target_sets,
-        }));
-
-        console.log('Inserting workout exercises:', workoutExercises.length);
-        const { data: workoutExData, error: workoutExError } = await supabase
-          .from('workout_exercises')
-          .insert(workoutExercises)
-          .select('id, exercise_id');
-
-        if (workoutExError) {
-          console.error('Workout exercises error:', workoutExError);
-          throw new Error(`Workout exercises insert failed: ${workoutExError.message} (Code: ${workoutExError.code})`);
-        }
-
-        console.log('Workout exercises created:', workoutExData?.length);
-
-        // Map exercise_id to workout_exercise_id
-        const idMap: Record<string, string> = {};
-        workoutExData?.forEach(item => {
-          idMap[item.exercise_id] = item.id;
-        });
-        setWorkoutExerciseIds(idMap);
-
-        console.log('Initialization complete!');
+        console.log('Workout session will be created on first set log');
 
       } catch (err: any) {
         console.error('Error initializing workout:', err);
@@ -198,12 +149,89 @@ export default function WorkoutPlayerPage() {
     initializeWorkout();
   }, [templateId, router]);
 
+  // Create workout session and workout_exercises
+  const createWorkoutSession = async () => {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) throw new Error('User not authenticated');
+
+      console.log('Creating workout session on first set...');
+
+      // Create workout session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('workout_sessions')
+        .insert({
+          user_id: user.id,
+          template_id: templateId,
+          workout_name: templateName,
+          started_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error(`Session creation failed: ${sessionError.message}`);
+      }
+      if (!sessionData) throw new Error('Session created but no data returned');
+
+      console.log('Workout session created:', sessionData.id);
+
+      // Create workout_exercises records
+      const workoutExercises = exercises.map((ex, index) => ({
+        workout_id: sessionData.id,
+        exercise_id: ex.exercise_id,
+        order_index: index + 1,
+        target_sets: ex.target_sets,
+      }));
+
+      console.log('Inserting workout exercises:', workoutExercises.length);
+      const { data: workoutExData, error: workoutExError } = await supabase
+        .from('workout_exercises')
+        .insert(workoutExercises)
+        .select('id, exercise_id');
+
+      if (workoutExError) {
+        console.error('Workout exercises error:', workoutExError);
+        throw new Error(`Workout exercises insert failed: ${workoutExError.message}`);
+      }
+
+      console.log('Workout exercises created:', workoutExData?.length);
+
+      // Map exercise_id to workout_exercise_id
+      const idMap: Record<string, string> = {};
+      workoutExData?.forEach(item => {
+        idMap[item.exercise_id] = item.id;
+      });
+
+      return { sessionId: sessionData.id, exerciseIds: idMap };
+    } catch (err: any) {
+      console.error('Error creating workout session:', err);
+      throw err;
+    }
+  };
+
   // Handle set submission
   const handleSetSubmit = async (setData: { weight_kg: number; reps: number; rpe: number }) => {
-    if (!workoutSessionId || typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
     setSubmitting(true);
     try {
+      // If no session exists, create it now (first set)
+      if (!workoutSessionId) {
+        const result = await createWorkoutSession();
+        if (!result) throw new Error('Failed to create workout session');
+        
+        setWorkoutSessionId(result.sessionId);
+        setWorkoutExerciseIds(result.exerciseIds);
+        
+        console.log('Session created on first set:', result.sessionId);
+      }
+
       const currentExercise = exercises[currentExerciseIndex];
       const workoutExerciseId = workoutExerciseIds[currentExercise.exercise_id];
       const currentSets = completedSets[currentExerciseIndex] || [];
@@ -388,7 +416,7 @@ export default function WorkoutPlayerPage() {
 
       if (error) throw error;
 
-      // Navigate to summary (Phase 1D)
+      // Navigate to summary
       router.push(`/workout/${templateId}/summary`);
 
     } catch (err) {
@@ -399,6 +427,14 @@ export default function WorkoutPlayerPage() {
 
   // Handle back button (exit workout)
   const handleBackClick = () => {
+    // If no session created yet (no sets logged), just navigate back
+    if (!workoutSessionId) {
+      console.log('No sets logged, navigating back without confirmation');
+      router.push('/');
+      return;
+    }
+
+    // Has sets - show confirmation
     setConfirmDialog({
       show: true,
       title: 'Exit Workout',
@@ -420,7 +456,7 @@ export default function WorkoutPlayerPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Starting workout...</p>
+          <p className="text-gray-400">Loading workout...</p>
         </div>
       </div>
     );
