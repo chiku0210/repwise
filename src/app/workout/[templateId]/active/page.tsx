@@ -67,7 +67,7 @@ export default function WorkoutPlayerPage() {
     onConfirm: () => {},
   });
 
-  // Fetch template (but don't create session yet)
+  // Initialize workout - load template and check for existing session
   useEffect(() => {
     async function initializeWorkout() {
       if (typeof window === 'undefined') return;
@@ -134,7 +134,9 @@ export default function WorkoutPlayerPage() {
 
         setExercises(enrichedExercises);
         console.log('Enriched exercises set:', enrichedExercises.length);
-        console.log('Workout session will be created on first set log');
+
+        // **CRITICAL: Check for existing incomplete session (handles refresh + resume)**
+        await checkAndRestoreSession(user.id, enrichedExercises);
 
       } catch (err: any) {
         console.error('Error initializing workout:', err);
@@ -148,6 +150,134 @@ export default function WorkoutPlayerPage() {
 
     initializeWorkout();
   }, [templateId, router]);
+
+  // Check for existing session and restore if found
+  const checkAndRestoreSession = async (userId: string, enrichedExercises: Exercise[]) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Check for incomplete session for this template
+      const { data: sessions, error: sessionError } = await supabase
+        .from('workout_sessions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('template_id', templateId)
+        .is('completed_at', null)
+        .order('started_at', { ascending: false })
+        .limit(1);
+
+      if (sessionError) {
+        console.error('Error checking for existing session:', sessionError);
+        return;
+      }
+
+      if (!sessions || sessions.length === 0) {
+        console.log('No existing session - fresh start (session created on first set)');
+        return;
+      }
+
+      const existingSession = sessions[0];
+      console.log('Found existing session - restoring...', existingSession.id);
+
+      // Restore session
+      await restoreWorkoutSession(existingSession.id, enrichedExercises);
+
+    } catch (err) {
+      console.error('Error in checkAndRestoreSession:', err);
+      // Don't fail initialization - just log and continue
+    }
+  };
+
+  // Restore existing workout session
+  const restoreWorkoutSession = async (sessionId: string, enrichedExercises: Exercise[]) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      console.log('Restoring session:', sessionId);
+
+      // Fetch workout_exercises
+      const { data: workoutExercises, error: exerciseError } = await supabase
+        .from('workout_exercises')
+        .select('id, exercise_id')
+        .eq('workout_id', sessionId);
+
+      if (exerciseError) throw exerciseError;
+
+      // Build exercise ID map
+      const idMap: Record<string, string> = {};
+      workoutExercises?.forEach(item => {
+        idMap[item.exercise_id] = item.id;
+      });
+
+      console.log('Workout exercises restored:', Object.keys(idMap).length);
+
+      // Fetch all logged sets
+      const { data: allSets, error: setsError } = await supabase
+        .from('exercise_sets')
+        .select('id, workout_exercise_id, set_number, weight_kg, reps, rpe')
+        .in('workout_exercise_id', Object.values(idMap))
+        .order('set_number', { ascending: true });
+
+      if (setsError) throw setsError;
+
+      console.log('Total sets restored:', allSets?.length || 0);
+
+      // Group sets by exercise index
+      const completedSetsMap: Record<number, WorkoutSet[]> = {};
+      
+      enrichedExercises.forEach((exercise, index) => {
+        const workoutExerciseId = idMap[exercise.exercise_id];
+        if (!workoutExerciseId) return;
+
+        const exerciseSets = allSets?.filter(set => set.workout_exercise_id === workoutExerciseId) || [];
+        
+        if (exerciseSets.length > 0) {
+          completedSetsMap[index] = exerciseSets.map(set => ({
+            id: set.id,
+            set_number: set.set_number,
+            weight_kg: set.weight_kg,
+            reps: set.reps,
+            rpe: set.rpe,
+          }));
+        }
+      });
+
+      // Find current exercise (first exercise with incomplete sets)
+      let currentIndex = 0;
+      for (let i = 0; i < enrichedExercises.length; i++) {
+        const sets = completedSetsMap[i] || [];
+        const targetSets = enrichedExercises[i].target_sets;
+        
+        if (sets.length < targetSets) {
+          currentIndex = i;
+          break;
+        }
+        
+        // If all target sets completed, move to next
+        if (i < enrichedExercises.length - 1) {
+          currentIndex = i + 1;
+        }
+      }
+
+      // Update state
+      setWorkoutSessionId(sessionId);
+      setWorkoutExerciseIds(idMap);
+      setCompletedSets(completedSetsMap);
+      setCurrentExerciseIndex(currentIndex);
+
+      console.log('Session restored successfully!');
+      console.log('- Sets by exercise:', Object.keys(completedSetsMap).map(k => `Ex${k}: ${completedSetsMap[parseInt(k)].length}`));
+      console.log('- Current exercise index:', currentIndex);
+
+    } catch (err) {
+      console.error('Error restoring workout session:', err);
+      throw err;
+    }
+  };
 
   // Create workout session and workout_exercises
   const createWorkoutSession = async () => {
