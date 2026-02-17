@@ -238,7 +238,7 @@ export default function WorkoutPickerPage() {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="px-4 py-4 flex items-center gap-3">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(`/dashboard`)}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             aria-label="Go back"
           >

@@ -203,7 +203,7 @@ export default function TemplatePreviewPage() {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-gray-700">
         <div className="px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(`/workout`)}
             className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Go back"
           >
