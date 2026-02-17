@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Bell, Copy } from 'lucide-react';
+import { useState } from 'react';
+import { Bell } from 'lucide-react';
 import { BottomNav } from '@/components/ui/bottom-nav';
 import { Footer } from '@/components/landing/Footer';
 import { AuthGate } from '@/components/AuthGate';
@@ -22,59 +22,9 @@ export default function DashboardPage() {
       ? Notification.permission 
       : 'denied'
   );
-  const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
-
-  // Capture console.log calls
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const originalLog = console.log;
-    const originalWarn = console.warn;
-    const originalError = console.error;
-
-    console.log = (...args) => {
-      const message = args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-      ).join(' ');
-      
-      if (message.includes('[NOTIF]')) {
-        setConsoleLogs(prev => [...prev, `LOG: ${message}`]);
-      }
-      originalLog(...args);
-    };
-
-    console.warn = (...args) => {
-      const message = args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-      ).join(' ');
-      
-      if (message.includes('[NOTIF]')) {
-        setConsoleLogs(prev => [...prev, `WARN: ${message}`]);
-      }
-      originalWarn(...args);
-    };
-
-    console.error = (...args) => {
-      const message = args.map(arg => 
-        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-      ).join(' ');
-      
-      if (message.includes('[NOTIF]')) {
-        setConsoleLogs(prev => [...prev, `ERROR: ${message}`]);
-      }
-      originalError(...args);
-    };
-
-    return () => {
-      console.log = originalLog;
-      console.warn = originalWarn;
-      console.error = originalError;
-    };
-  }, []);
 
   const handleRequestPermission = async () => {
     setNotifStatus('Requesting permission...');
-    setConsoleLogs([]);
     
     try {
       const permission = await requestNotificationPermission();
@@ -89,13 +39,12 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       setNotifStatus(`❌ Error: ${err.message}`);
-      console.error('[NOTIF] Permission request error:', err);
+      console.error('Permission request error:', err);
     }
   };
 
   const handleSendTestNotification = () => {
     setNotifStatus('Attempting to send notification...');
-    setConsoleLogs([]);
     
     try {
       if (!canSendNotification()) {
@@ -104,16 +53,15 @@ export default function DashboardPage() {
       }
 
       sendRestCompleteNotification();
-      setNotifStatus('✅ sendRestCompleteNotification() executed! Check console logs below.');
+      setNotifStatus('✅ Notification sent! Check your notifications.');
     } catch (err: any) {
       setNotifStatus(`❌ Send failed: ${err.message}`);
-      console.error('[NOTIF] Send notification error:', err);
+      console.error('Send notification error:', err);
     }
   };
 
   const handleTestAll = async () => {
     setNotifStatus('Running full test...');
-    setConsoleLogs([]);
     
     try {
       // Step 1: Check API availability
@@ -136,18 +84,12 @@ export default function DashboardPage() {
       await new Promise(resolve => setTimeout(resolve, 500));
       
       sendRestCompleteNotification();
-      setNotifStatus('✅ Full test complete! Check console logs and notifications.');
+      setNotifStatus('✅ Full test complete! Check notifications.');
       
     } catch (err: any) {
       setNotifStatus(`❌ Test failed: ${err.message}`);
-      console.error('[NOTIF] Full test error:', err);
+      console.error('Full test error:', err);
     }
-  };
-
-  const copyLogsToClipboard = () => {
-    const logsText = consoleLogs.join('\n');
-    navigator.clipboard.writeText(logsText);
-    setNotifStatus('📋 Logs copied to clipboard!');
   };
 
   return (
@@ -218,45 +160,15 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              {/* Console Logs */}
-              {consoleLogs.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-yellow-400">📋 Console Logs:</h4>
-                    <button
-                      onClick={copyLogsToClipboard}
-                      className="text-xs flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      <Copy className="w-3 h-3" />
-                      Copy
-                    </button>
-                  </div>
-                  <div className="bg-black/40 border border-gray-700 rounded-lg p-3 max-h-64 overflow-y-auto text-xs font-mono">
-                    {consoleLogs.map((log, index) => (
-                      <div 
-                        key={index} 
-                        className={`py-1 ${
-                          log.startsWith('ERROR:') ? 'text-red-400' :
-                          log.startsWith('WARN:') ? 'text-yellow-400' :
-                          'text-green-400'
-                        }`}
-                      >
-                        {log}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Instructions */}
               <div className="text-xs text-gray-400 border-t border-yellow-700/30 pt-3">
-                <p className="font-semibold mb-1">🔍 Debugging Steps:</p>
+                <p className="font-semibold mb-1">Testing Instructions:</p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Click "✅ Send Test Notification" button</li>
-                  <li>Read console logs above - look for "onshow" event</li>
-                  <li>Check system notification settings (OS level)</li>
-                  <li>Check browser notification settings</li>
-                  <li>Try closing/minimizing browser and re-sending</li>
+                  <li>Click "Run Full Test" to request permission and send test</li>
+                  <li>Grant permission when browser prompts you</li>
+                  <li>Check if notification appears</li>
+                  <li>On iOS: Must be installed as PWA for notifications to work</li>
+                  <li>On Android: Works in browser + PWA</li>
                 </ol>
               </div>
             </div>
