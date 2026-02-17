@@ -1,16 +1,45 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { Dumbbell } from 'lucide-react';
+
+interface UserProfile {
+  name: string | null;
+}
 
 export function WelcomeHeader() {
   const { user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
-  // Extract first name from email or use 'there'
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+        
+        setProfile(data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+
+    fetchProfile();
+  }, [user?.id]);
+
+  // Priority: profile.name > email username > 'there'
   const getName = () => {
+    if (profile?.name) return profile.name;
     if (!user?.email) return 'there';
-    const name = user.email.split('@')[0];
-    return name.charAt(0).toUpperCase() + name.slice(1);
+    const username = user.email.split('@')[0];
+    return username.charAt(0).toUpperCase() + username.slice(1);
   };
 
   const getGreeting = () => {

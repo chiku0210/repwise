@@ -11,6 +11,7 @@ interface WorkoutSession {
   started_at: string;
   finished_at: string | null;
   duration_minutes: number | null;
+  workout_name: string;
   template_id: string | null;
   templates?: {
     name: string;
@@ -30,6 +31,7 @@ export function RecentWorkouts() {
           .from('workout_sessions')
           .select(`
             id,
+            workout_name,
             started_at,
             finished_at,
             duration_minutes,
@@ -38,11 +40,16 @@ export function RecentWorkouts() {
               name
             )
           `)
-          .eq('status', 'completed')
-          .order('started_at', { ascending: false })
+          .not('finished_at', 'is', null) // Only completed workouts
+          .order('finished_at', { ascending: false })
           .limit(5);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw error;
+        }
+        
+        console.log('Fetched workouts:', data);
         setWorkouts(data || []);
       } catch (error) {
         console.error('Error fetching recent workouts:', error);
@@ -97,30 +104,35 @@ export function RecentWorkouts() {
       </div>
 
       <div className="space-y-2">
-        {workouts.map((workout) => (
-          <button
-            key={workout.id}
-            onClick={() => router.push(`/log?session=${workout.id}`)}
-            className="flex w-full items-center justify-between rounded-xl border border-gray-800 bg-[#0f1e33] p-4 text-left transition-all hover:border-blue-600/50 hover:bg-[#0f1e33]/80"
-          >
-            <div className="flex-1">
-              <p className="font-medium text-white">
-                {workout.templates?.name || 'Workout'}
-              </p>
-              <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {workout.duration_minutes ? `${workout.duration_minutes} min` : 'N/A'}
-                </span>
-                <span>•</span>
-                <span>
-                  {formatDistanceToNow(new Date(workout.started_at), { addSuffix: true })}
-                </span>
+        {workouts.map((workout) => {
+          // Priority: template name > workout_name field
+          const displayName = workout.templates?.name || workout.workout_name || 'Workout';
+          
+          return (
+            <button
+              key={workout.id}
+              onClick={() => router.push(`/log?session=${workout.id}`)}
+              className="flex w-full items-center justify-between rounded-xl border border-gray-800 bg-[#0f1e33] p-4 text-left transition-all hover:border-blue-600/50 hover:bg-[#0f1e33]/80"
+            >
+              <div className="flex-1">
+                <p className="font-medium text-white">{displayName}</p>
+                <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {workout.duration_minutes ? `${workout.duration_minutes} min` : 'N/A'}
+                  </span>
+                  <span>•</span>
+                  <span>
+                    {workout.finished_at
+                      ? formatDistanceToNow(new Date(workout.finished_at), { addSuffix: true })
+                      : formatDistanceToNow(new Date(workout.started_at), { addSuffix: true })}
+                  </span>
+                </div>
               </div>
-            </div>
-            <ChevronRight className="h-5 w-5 text-gray-500" />
-          </button>
-        ))}
+              <ChevronRight className="h-5 w-5 text-gray-500" />
+            </button>
+          );
+        })}
       </div>
     </div>
   );

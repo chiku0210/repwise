@@ -11,28 +11,29 @@ export function QuickActions() {
       {/* Start Workout */}
       <button
         onClick={() => router.push('/workout')}
-        className="flex flex-col items-center justify-center gap-3 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-center shadow-lg shadow-blue-600/20 transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-600/30 active:scale-95"
+        className="group relative flex flex-col items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 p-6 shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-600/30 active:scale-95"
       >
-        <div className="rounded-lg bg-white/10 p-2">
-          <Dumbbell className="h-6 w-6 text-white" strokeWidth={2} />
+        {/* Subtle animated background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+        
+        <div className="relative rounded-full bg-white/15 p-3 ring-2 ring-white/20 transition-transform group-hover:scale-110">
+          <Dumbbell className="h-7 w-7 text-white" strokeWidth={2.5} />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-white">Start</p>
-          <p className="text-sm font-semibold text-white">Workout</p>
+        <div className="relative">
+          <p className="text-base font-bold text-white">Start Workout</p>
         </div>
       </button>
 
       {/* Quick Log */}
       <button
         onClick={() => router.push('/quick-log')}
-        className="flex flex-col items-center justify-center gap-3 rounded-xl border border-blue-600/50 bg-blue-600/10 p-6 text-center transition-all hover:border-blue-600 hover:bg-blue-600/20 active:scale-95"
+        className="group flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-blue-600/50 bg-blue-600/10 p-6 transition-all hover:border-blue-600 hover:bg-blue-600/20 active:scale-95"
       >
-        <div className="rounded-lg bg-blue-500/20 p-2">
-          <Zap className="h-6 w-6 text-blue-400" strokeWidth={2} />
+        <div className="rounded-full bg-blue-500/20 p-3 ring-2 ring-blue-500/30 transition-transform group-hover:scale-110">
+          <Zap className="h-7 w-7 text-blue-400" strokeWidth={2.5} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-blue-400">Quick</p>
-          <p className="text-sm font-semibold text-blue-400">Log</p>
+          <p className="text-base font-bold text-blue-400">Quick Log</p>
         </div>
       </button>
     </div>
