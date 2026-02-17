@@ -7,6 +7,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { TemplateCard } from '@/components/workout/TemplateCard';
 import { TemplateCardSkeleton } from '@/components/workout/TemplateCardSkeleton';
 import { BottomNav } from '@/components/ui/bottom-nav';
+import ResumeWorkoutDialog from '@/components/resume-workout-dialog';
 
 interface WorkoutTemplate {
   id: string;
@@ -18,6 +19,20 @@ interface WorkoutTemplate {
   equipment: string[];
 }
 
+interface IncompleteSession {
+  id: string;
+  workout_name: string;
+  started_at: string;
+  total_sets: number;
+  total_volume_kg: number;
+  template_id: string;
+  workout_exercises: {
+    exercises: {
+      name: string;
+    };
+  }[];
+}
+
 type DifficultyFilter = 'all' | 'beginner' | 'intermediate' | 'advanced';
 
 export default function WorkoutPickerPage() {
@@ -27,6 +42,12 @@ export default function WorkoutPickerPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<DifficultyFilter>('all');
+  
+  // Resume dialog state
+  const [resumeDialog, setResumeDialog] = useState<{
+    show: boolean;
+    session: IncompleteSession | null;
+  }>({ show: false, session: null });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -78,8 +99,110 @@ export default function WorkoutPickerPage() {
     fetchTemplates();
   }, []);
 
-  const handleTemplateSelect = (templateId: string) => {
-    router.push(`/workout/${templateId}/preview`);
+  // Check for incomplete session before starting workout
+  const checkIncompleteSession = async (templateId: string): Promise<IncompleteSession | null> => {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return null;
+
+      const { data: sessions, error } = await supabase
+        .from('workout_sessions')
+        .select(`
+          id,
+          workout_name,
+          started_at,
+          total_sets,
+          total_volume_kg,
+          template_id,
+          workout_exercises (
+            exercises (
+              name
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('template_id', templateId)
+        .is('completed_at', null)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .returns<IncompleteSession[]>();
+
+      if (error) {
+        console.error('Error checking incomplete session:', error);
+        return null;
+      }
+
+      return sessions && sessions.length > 0 ? sessions[0] : null;
+    } catch (err) {
+      console.error('Error in checkIncompleteSession:', err);
+      return null;
+    }
+  };
+
+  // Abandon (mark as discarded) old session
+  const abandonSession = async (sessionId: string) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      
+      // Delete the session and all related data
+      const { error } = await supabase
+        .from('workout_sessions')
+        .delete()
+        .eq('id', sessionId);
+
+      if (error) throw error;
+      
+      console.log('Abandoned session:', sessionId);
+    } catch (err) {
+      console.error('Error abandoning session:', err);
+      throw err;
+    }
+  };
+
+  // Handle template selection
+  const handleTemplateSelect = async (templateId: string) => {
+    // Check for incomplete session
+    const incompleteSession = await checkIncompleteSession(templateId);
+
+    if (incompleteSession && incompleteSession.total_sets > 0) {
+      // Show resume dialog (Case 1 & 2)
+      setResumeDialog({ show: true, session: incompleteSession });
+    } else {
+      // No incomplete session - navigate directly
+      router.push(`/workout/${templateId}/active`);
+    }
+  };
+
+  // Handle resume from dialog
+  const handleResumeWorkout = () => {
+    if (!resumeDialog.session) return;
+    
+    // Navigate to workout page - auto-restore will handle loading the session
+    router.push(`/workout/${resumeDialog.session.template_id}/active`);
+    setResumeDialog({ show: false, session: null });
+  };
+
+  // Handle start fresh from dialog
+  const handleStartFresh = async () => {
+    if (!resumeDialog.session) return;
+
+    try {
+      // Abandon old session
+      await abandonSession(resumeDialog.session.id);
+      
+      // Navigate to workout page (fresh start)
+      router.push(`/workout/${resumeDialog.session.template_id}/active`);
+      setResumeDialog({ show: false, session: null });
+    } catch (err) {
+      console.error('Error starting fresh:', err);
+      alert('Failed to start fresh workout. Please try again.');
+    }
   };
 
   // Filter templates by search query and difficulty
@@ -115,7 +238,7 @@ export default function WorkoutPickerPage() {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="px-4 py-4 flex items-center gap-3">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(`/dashboard`)}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             aria-label="Go back"
           >
@@ -236,6 +359,21 @@ export default function WorkoutPickerPage() {
           )}
         </div>
       </div>
+
+      {/* Resume Workout Dialog */}
+      {resumeDialog.session && (
+        <ResumeWorkoutDialog
+          show={resumeDialog.show}
+          workoutName={resumeDialog.session.workout_name}
+          startedAt={resumeDialog.session.started_at}
+          totalSets={resumeDialog.session.total_sets || 0}
+          totalVolumeKg={resumeDialog.session.total_volume_kg || 0}
+          exerciseNames={resumeDialog.session.workout_exercises.map(ex => ex.exercises.name)}
+          onResume={handleResumeWorkout}
+          onStartFresh={handleStartFresh}
+          onCancel={() => setResumeDialog({ show: false, session: null })}
+        />
+      )}
 
       <BottomNav />
     </div>

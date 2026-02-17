@@ -10,6 +10,7 @@ import { ExerciseHeader } from '@/components/workout/ExerciseHeader';
 import { FormCuesCollapsible } from '@/components/workout/FormCuesCollapsible';
 import { SetInputForm } from '@/components/workout/SetInputForm';
 import { LoggedSetItem } from '@/components/workout/LoggedSetItem';
+import { RestTimer } from '@/components/workout/RestTimer';
 import ConfirmDialog from '@/components/confirm-dialog';
 
 interface Exercise {
@@ -46,6 +47,7 @@ export default function WorkoutPlayerPage() {
   const templateId = params.templateId as string;
 
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [templateName, setTemplateName] = useState<string>('');
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [completedSets, setCompletedSets] = useState<Record<number, WorkoutSet[]>>({});
   const [loading, setLoading] = useState(true);
@@ -53,6 +55,12 @@ export default function WorkoutPlayerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [workoutSessionId, setWorkoutSessionId] = useState<string | null>(null);
   const [workoutExerciseIds, setWorkoutExerciseIds] = useState<Record<string, string>>({});
+  
+  // Track if user made any changes in this visit
+  const [hasChangesInThisVisit, setHasChangesInThisVisit] = useState(false);
+  
+  // Rest timer state
+  const [showRestTimer, setShowRestTimer] = useState(false);
   
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
@@ -62,7 +70,7 @@ export default function WorkoutPlayerPage() {
     onConfirm: () => {},
   });
 
-  // Fetch template and create workout session
+  // Initialize workout - load template and check for existing session
   useEffect(() => {
     async function initializeWorkout() {
       if (typeof window === 'undefined') return;
@@ -92,6 +100,7 @@ export default function WorkoutPlayerPage() {
         if (!templateData) throw new Error('Template not found');
 
         console.log('Template loaded:', templateData.name);
+        setTemplateName(templateData.name);
 
         // Fetch exercise details
         const exerciseIds = templateData.exercises.map((ex: any) => ex.exercise_id);
@@ -129,57 +138,8 @@ export default function WorkoutPlayerPage() {
         setExercises(enrichedExercises);
         console.log('Enriched exercises set:', enrichedExercises.length);
 
-        // Create workout session
-        console.log('Creating workout session...');
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('workout_sessions')
-          .insert({
-            user_id: user.id,
-            template_id: templateId,
-            workout_name: templateData.name,
-            started_at: new Date().toISOString(),
-          })
-          .select('id')
-          .single();
-
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw new Error(`Session creation failed: ${sessionError.message} (Code: ${sessionError.code})`);
-        }
-        if (!sessionData) throw new Error('Session created but no data returned');
-
-        setWorkoutSessionId(sessionData.id);
-        console.log('Workout session created:', sessionData.id);
-
-        // Create workout_exercises records
-        const workoutExercises = enrichedExercises.map((ex, index) => ({
-          workout_id: sessionData.id,
-          exercise_id: ex.exercise_id,
-          order_index: index + 1,
-          target_sets: ex.target_sets,
-        }));
-
-        console.log('Inserting workout exercises:', workoutExercises.length);
-        const { data: workoutExData, error: workoutExError } = await supabase
-          .from('workout_exercises')
-          .insert(workoutExercises)
-          .select('id, exercise_id');
-
-        if (workoutExError) {
-          console.error('Workout exercises error:', workoutExError);
-          throw new Error(`Workout exercises insert failed: ${workoutExError.message} (Code: ${workoutExError.code})`);
-        }
-
-        console.log('Workout exercises created:', workoutExData?.length);
-
-        // Map exercise_id to workout_exercise_id
-        const idMap: Record<string, string> = {};
-        workoutExData?.forEach(item => {
-          idMap[item.exercise_id] = item.id;
-        });
-        setWorkoutExerciseIds(idMap);
-
-        console.log('Initialization complete!');
+        // **CRITICAL: Check for existing incomplete session (handles refresh + resume)**
+        await checkAndRestoreSession(user.id, enrichedExercises);
 
       } catch (err: any) {
         console.error('Error initializing workout:', err);
@@ -194,14 +154,228 @@ export default function WorkoutPlayerPage() {
     initializeWorkout();
   }, [templateId, router]);
 
+  // Check for existing session and restore if found
+  const checkAndRestoreSession = async (userId: string, enrichedExercises: Exercise[]) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Check for incomplete session for this template
+      const { data: sessions, error: sessionError } = await supabase
+        .from('workout_sessions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('template_id', templateId)
+        .is('completed_at', null)
+        .order('started_at', { ascending: false })
+        .limit(1);
+
+      if (sessionError) {
+        console.error('Error checking for existing session:', sessionError);
+        return;
+      }
+
+      if (!sessions || sessions.length === 0) {
+        console.log('No existing session - fresh start (session created on first set)');
+        return;
+      }
+
+      const existingSession = sessions[0];
+      console.log('Found existing session - restoring...', existingSession.id);
+
+      // Restore session
+      await restoreWorkoutSession(existingSession.id, enrichedExercises);
+
+    } catch (err) {
+      console.error('Error in checkAndRestoreSession:', err);
+      // Don't fail initialization - just log and continue
+    }
+  };
+
+  // Restore existing workout session
+  const restoreWorkoutSession = async (sessionId: string, enrichedExercises: Exercise[]) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      console.log('Restoring session:', sessionId);
+
+      // Fetch workout_exercises
+      const { data: workoutExercises, error: exerciseError } = await supabase
+        .from('workout_exercises')
+        .select('id, exercise_id')
+        .eq('workout_id', sessionId);
+
+      if (exerciseError) throw exerciseError;
+
+      // Build exercise ID map
+      const idMap: Record<string, string> = {};
+      workoutExercises?.forEach(item => {
+        idMap[item.exercise_id] = item.id;
+      });
+
+      console.log('Workout exercises restored:', Object.keys(idMap).length);
+
+      // Fetch all logged sets
+      const { data: allSets, error: setsError } = await supabase
+        .from('exercise_sets')
+        .select('id, workout_exercise_id, set_number, weight_kg, reps, rpe')
+        .in('workout_exercise_id', Object.values(idMap))
+        .order('set_number', { ascending: true });
+
+      if (setsError) throw setsError;
+
+      console.log('Total sets restored:', allSets?.length || 0);
+
+      // Group sets by exercise index
+      const completedSetsMap: Record<number, WorkoutSet[]> = {};
+      
+      enrichedExercises.forEach((exercise, index) => {
+        const workoutExerciseId = idMap[exercise.exercise_id];
+        if (!workoutExerciseId) return;
+
+        const exerciseSets = allSets?.filter(set => set.workout_exercise_id === workoutExerciseId) || [];
+        
+        if (exerciseSets.length > 0) {
+          completedSetsMap[index] = exerciseSets.map(set => ({
+            id: set.id,
+            set_number: set.set_number,
+            weight_kg: set.weight_kg,
+            reps: set.reps,
+            rpe: set.rpe,
+          }));
+        }
+      });
+
+      // Find current exercise (first exercise with incomplete sets)
+      let currentIndex = 0;
+      for (let i = 0; i < enrichedExercises.length; i++) {
+        const sets = completedSetsMap[i] || [];
+        const targetSets = enrichedExercises[i].target_sets;
+        
+        if (sets.length < targetSets) {
+          currentIndex = i;
+          break;
+        }
+        
+        // If all target sets completed, move to next
+        if (i < enrichedExercises.length - 1) {
+          currentIndex = i + 1;
+        }
+      }
+
+      // Update state
+      setWorkoutSessionId(sessionId);
+      setWorkoutExerciseIds(idMap);
+      setCompletedSets(completedSetsMap);
+      setCurrentExerciseIndex(currentIndex);
+      // Don't set hasChangesInThisVisit - restored state doesn't count as changes
+
+      console.log('Session restored successfully!');
+      console.log('- Sets by exercise:', Object.keys(completedSetsMap).map(k => `Ex${k}: ${completedSetsMap[parseInt(k)].length}`));
+      console.log('- Current exercise index:', currentIndex);
+
+    } catch (err) {
+      console.error('Error restoring workout session:', err);
+      throw err;
+    }
+  };
+
+  // Create workout session and workout_exercises
+  const createWorkoutSession = async () => {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) throw new Error('User not authenticated');
+
+      console.log('Creating workout session on first set...');
+
+      // Create workout session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('workout_sessions')
+        .insert({
+          user_id: user.id,
+          template_id: templateId,
+          workout_name: templateName,
+          started_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error(`Session creation failed: ${sessionError.message}`);
+      }
+      if (!sessionData) throw new Error('Session created but no data returned');
+
+      console.log('Workout session created:', sessionData.id);
+
+      // Create workout_exercises records
+      const workoutExercises = exercises.map((ex, index) => ({
+        workout_id: sessionData.id,
+        exercise_id: ex.exercise_id,
+        order_index: index + 1,
+        target_sets: ex.target_sets,
+      }));
+
+      console.log('Inserting workout exercises:', workoutExercises.length);
+      const { data: workoutExData, error: workoutExError } = await supabase
+        .from('workout_exercises')
+        .insert(workoutExercises)
+        .select('id, exercise_id');
+
+      if (workoutExError) {
+        console.error('Workout exercises error:', workoutExError);
+        throw new Error(`Workout exercises insert failed: ${workoutExError.message}`);
+      }
+
+      console.log('Workout exercises created:', workoutExData?.length);
+
+      // Map exercise_id to workout_exercise_id
+      const idMap: Record<string, string> = {};
+      workoutExData?.forEach(item => {
+        idMap[item.exercise_id] = item.id;
+      });
+
+      return { sessionId: sessionData.id, exerciseIds: idMap };
+    } catch (err: any) {
+      console.error('Error creating workout session:', err);
+      throw err;
+    }
+  };
+
   // Handle set submission
   const handleSetSubmit = async (setData: { weight_kg: number; reps: number; rpe: number }) => {
-    if (!workoutSessionId || typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
     setSubmitting(true);
     try {
+      let currentWorkoutExerciseIds = workoutExerciseIds;
+      
+      // If no session exists, create it now (first set)
+      if (!workoutSessionId) {
+        const result = await createWorkoutSession();
+        if (!result) throw new Error('Failed to create workout session');
+        
+        setWorkoutSessionId(result.sessionId);
+        setWorkoutExerciseIds(result.exerciseIds);
+        currentWorkoutExerciseIds = result.exerciseIds; // Use returned value immediately
+        
+        console.log('Session created on first set:', result.sessionId);
+      }
+
       const currentExercise = exercises[currentExerciseIndex];
-      const workoutExerciseId = workoutExerciseIds[currentExercise.exercise_id];
+      const workoutExerciseId = currentWorkoutExerciseIds[currentExercise.exercise_id];
+      
+      if (!workoutExerciseId) {
+        throw new Error(`workout_exercise_id not found for exercise: ${currentExercise.exercise_id}`);
+      }
+      
       const currentSets = completedSets[currentExerciseIndex] || [];
       const setNumber = currentSets.length + 1;
 
@@ -225,13 +399,28 @@ export default function WorkoutPlayerPage() {
       if (setError) throw setError;
 
       // Update local state
+      const newSets = [
+        ...currentSets,
+        { id: data.id, set_number: setNumber, ...setData },
+      ];
+      
       setCompletedSets(prev => ({
         ...prev,
-        [currentExerciseIndex]: [
-          ...currentSets,
-          { id: data.id, set_number: setNumber, ...setData },
-        ],
+        [currentExerciseIndex]: newSets,
       }));
+
+      // Mark that user made changes in this visit
+      setHasChangesInThisVisit(true);
+
+      // Show rest timer if:
+      // 1. Not the last set of target sets AND
+      // 2. Not the last exercise OR not all sets completed
+      const isLastExercise = currentExerciseIndex === exercises.length - 1;
+      const reachedTargetSets = setNumber >= currentExercise.target_sets;
+      
+      if (!reachedTargetSets || !isLastExercise) {
+        setShowRestTimer(true);
+      }
 
     } catch (err) {
       console.error('Error logging set:', err);
@@ -239,6 +428,11 @@ export default function WorkoutPlayerPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Handle rest timer completion/skip
+  const handleRestTimerClose = () => {
+    setShowRestTimer(false);
   };
 
   // Handle set deletion
@@ -270,6 +464,9 @@ export default function WorkoutPlayerPage() {
             ...prev,
             [currentExerciseIndex]: updatedSets,
           }));
+
+          // Mark that user made changes
+          setHasChangesInThisVisit(true);
 
         } catch (err) {
           console.error('Error deleting set:', err);
@@ -304,9 +501,45 @@ export default function WorkoutPlayerPage() {
         const [removed] = newExercises.splice(currentExerciseIndex, 1);
         newExercises.push(removed);
         setExercises(newExercises);
+        
+        // Mark that user made changes
+        setHasChangesInThisVisit(true);
+        
         setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
       },
     });
+  };
+
+  // Save workout progress (without completing)
+  const saveWorkoutProgress = async () => {
+    if (!workoutSessionId || typeof window === 'undefined') return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      // Calculate totals from completed sets
+      const allSets = Object.values(completedSets).flat();
+      const totalSets = allSets.length;
+      const totalReps = allSets.reduce((sum, set) => sum + set.reps, 0);
+      const totalVolume = allSets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
+
+      // Update session WITHOUT completed_at (workout still in progress)
+      const { error } = await supabase
+        .from('workout_sessions')
+        .update({
+          total_sets: totalSets,
+          total_reps: totalReps,
+          total_volume_kg: totalVolume,
+        })
+        .eq('id', workoutSessionId);
+
+      if (error) throw error;
+
+      console.log('Workout progress saved:', { totalSets, totalReps, totalVolume });
+    } catch (err) {
+      console.error('Error saving workout progress:', err);
+      // Don't block navigation even if save fails
+    }
   };
 
   // Handle finish workout
@@ -322,7 +555,7 @@ export default function WorkoutPlayerPage() {
       const totalReps = allSets.reduce((sum, set) => sum + set.reps, 0);
       const totalVolume = allSets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
 
-      // Update session
+      // Update session WITH completed_at (workout finished)
       const { error } = await supabase
         .from('workout_sessions')
         .update({
@@ -335,7 +568,7 @@ export default function WorkoutPlayerPage() {
 
       if (error) throw error;
 
-      // Navigate to summary (Phase 1D)
+      // Navigate to summary
       router.push(`/workout/${templateId}/summary`);
 
     } catch (err) {
@@ -346,13 +579,25 @@ export default function WorkoutPlayerPage() {
 
   // Handle back button (exit workout)
   const handleBackClick = () => {
+    // If no changes made in this visit, just navigate back
+    if (!hasChangesInThisVisit) {
+      console.log('No changes made in this visit, navigating back without confirmation');
+      router.push('/workout');
+      return;
+    }
+
+    // Has changes - show confirmation
     setConfirmDialog({
       show: true,
       title: 'Exit Workout',
       message: 'Your progress will be saved. You can resume later from your workout history.',
       variant: 'warning',
-      onConfirm: () => {
+      onConfirm: async () => {
         setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
+        
+        // Save progress before exiting
+        await saveWorkoutProgress();
+        
         router.push('/');
       },
     });
@@ -363,7 +608,7 @@ export default function WorkoutPlayerPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Starting workout...</p>
+          <p className="text-gray-400">Loading workout...</p>
         </div>
       </div>
     );
@@ -495,6 +740,14 @@ export default function WorkoutPlayerPage() {
           </div>
         </div>
       </div>
+
+      {/* Rest Timer */}
+      <RestTimer
+        isOpen={showRestTimer}
+        restSeconds={currentExercise.rest_seconds}
+        onComplete={handleRestTimerClose}
+        onSkip={handleRestTimerClose}
+      />
 
       {/* Confirmation Dialog */}
       <ConfirmDialog
