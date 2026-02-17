@@ -84,8 +84,6 @@ export default function WorkoutPlayerPage() {
           return;
         }
 
-        console.log('User authenticated:', user.id);
-
         // Fetch template with exercises
         const { data: templateData, error: templateError } = await supabase
           .from('templates')
@@ -99,7 +97,6 @@ export default function WorkoutPlayerPage() {
         }
         if (!templateData) throw new Error('Template not found');
 
-        console.log('Template loaded:', templateData.name);
         setTemplateName(templateData.name);
 
         // Fetch exercise details
@@ -113,8 +110,6 @@ export default function WorkoutPlayerPage() {
           console.error('Exercise error:', exerciseError);
           throw new Error(`Exercise error: ${exerciseError.message}`);
         }
-
-        console.log('Exercises loaded:', exerciseDetails?.length);
 
         // Enrich exercises with details
         const exerciseMap = new Map(exerciseDetails?.map(ex => [ex.id, ex]) || []);
@@ -136,14 +131,12 @@ export default function WorkoutPlayerPage() {
           .sort((a: { order_index: number; }, b: { order_index: number; }) => a.order_index - b.order_index);
 
         setExercises(enrichedExercises);
-        console.log('Enriched exercises set:', enrichedExercises.length);
 
-        // **CRITICAL: Check for existing incomplete session (handles refresh + resume)**
+        // Check for existing incomplete session (handles refresh + resume)
         await checkAndRestoreSession(user.id, enrichedExercises);
 
       } catch (err: any) {
         console.error('Error initializing workout:', err);
-        console.error('Error details:', JSON.stringify(err, null, 2));
         const errorMessage = err?.message || err?.toString() || 'Failed to start workout';
         setError(errorMessage);
       } finally {
@@ -177,19 +170,14 @@ export default function WorkoutPlayerPage() {
       }
 
       if (!sessions || sessions.length === 0) {
-        console.log('No existing session - fresh start (session created on first set)');
         return;
       }
 
       const existingSession = sessions[0];
-      console.log('Found existing session - restoring...', existingSession.id);
-
-      // Restore session
       await restoreWorkoutSession(existingSession.id, enrichedExercises);
 
     } catch (err) {
       console.error('Error in checkAndRestoreSession:', err);
-      // Don't fail initialization - just log and continue
     }
   };
 
@@ -199,8 +187,6 @@ export default function WorkoutPlayerPage() {
 
     try {
       const supabase = getSupabaseBrowserClient();
-
-      console.log('Restoring session:', sessionId);
 
       // Fetch workout_exercises
       const { data: workoutExercises, error: exerciseError } = await supabase
@@ -216,8 +202,6 @@ export default function WorkoutPlayerPage() {
         idMap[item.exercise_id] = item.id;
       });
 
-      console.log('Workout exercises restored:', Object.keys(idMap).length);
-
       // Fetch all logged sets
       const { data: allSets, error: setsError } = await supabase
         .from('exercise_sets')
@@ -226,8 +210,6 @@ export default function WorkoutPlayerPage() {
         .order('set_number', { ascending: true });
 
       if (setsError) throw setsError;
-
-      console.log('Total sets restored:', allSets?.length || 0);
 
       // Group sets by exercise index
       const completedSetsMap: Record<number, WorkoutSet[]> = {};
@@ -271,11 +253,6 @@ export default function WorkoutPlayerPage() {
       setWorkoutExerciseIds(idMap);
       setCompletedSets(completedSetsMap);
       setCurrentExerciseIndex(currentIndex);
-      // Don't set hasChangesInThisVisit - restored state doesn't count as changes
-
-      console.log('Session restored successfully!');
-      console.log('- Sets by exercise:', Object.keys(completedSetsMap).map(k => `Ex${k}: ${completedSetsMap[parseInt(k)].length}`));
-      console.log('- Current exercise index:', currentIndex);
 
     } catch (err) {
       console.error('Error restoring workout session:', err);
@@ -292,8 +269,6 @@ export default function WorkoutPlayerPage() {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) throw new Error('User not authenticated');
-
-      console.log('Creating workout session on first set...');
 
       // Create workout session
       const { data: sessionData, error: sessionError } = await supabase
@@ -313,8 +288,6 @@ export default function WorkoutPlayerPage() {
       }
       if (!sessionData) throw new Error('Session created but no data returned');
 
-      console.log('Workout session created:', sessionData.id);
-
       // Create workout_exercises records
       const workoutExercises = exercises.map((ex, index) => ({
         workout_id: sessionData.id,
@@ -323,7 +296,6 @@ export default function WorkoutPlayerPage() {
         target_sets: ex.target_sets,
       }));
 
-      console.log('Inserting workout exercises:', workoutExercises.length);
       const { data: workoutExData, error: workoutExError } = await supabase
         .from('workout_exercises')
         .insert(workoutExercises)
@@ -333,8 +305,6 @@ export default function WorkoutPlayerPage() {
         console.error('Workout exercises error:', workoutExError);
         throw new Error(`Workout exercises insert failed: ${workoutExError.message}`);
       }
-
-      console.log('Workout exercises created:', workoutExData?.length);
 
       // Map exercise_id to workout_exercise_id
       const idMap: Record<string, string> = {};
@@ -364,9 +334,7 @@ export default function WorkoutPlayerPage() {
         
         setWorkoutSessionId(result.sessionId);
         setWorkoutExerciseIds(result.exerciseIds);
-        currentWorkoutExerciseIds = result.exerciseIds; // Use returned value immediately
-        
-        console.log('Session created on first set:', result.sessionId);
+        currentWorkoutExerciseIds = result.exerciseIds;
       }
 
       const currentExercise = exercises[currentExerciseIndex];
@@ -409,12 +377,9 @@ export default function WorkoutPlayerPage() {
         [currentExerciseIndex]: newSets,
       }));
 
-      // Mark that user made changes in this visit
       setHasChangesInThisVisit(true);
 
-      // Show rest timer if:
-      // 1. Not the last set of target sets AND
-      // 2. Not the last exercise OR not all sets completed
+      // Show rest timer if not last set or not last exercise
       const isLastExercise = currentExerciseIndex === exercises.length - 1;
       const reachedTargetSets = setNumber >= currentExercise.target_sets;
       
@@ -465,7 +430,6 @@ export default function WorkoutPlayerPage() {
             [currentExerciseIndex]: updatedSets,
           }));
 
-          // Mark that user made changes
           setHasChangesInThisVisit(true);
 
         } catch (err) {
@@ -483,7 +447,6 @@ export default function WorkoutPlayerPage() {
     if (currentExerciseIndex < exercises.length - 1) {
       setCurrentExerciseIndex(prev => prev + 1);
     } else {
-      // Finish workout
       handleFinishWorkout();
     }
   };
@@ -496,13 +459,11 @@ export default function WorkoutPlayerPage() {
       message: 'Move this exercise to the end of your workout?',
       variant: 'info',
       onConfirm: () => {
-        // Move current exercise to end
         const newExercises = [...exercises];
         const [removed] = newExercises.splice(currentExerciseIndex, 1);
         newExercises.push(removed);
         setExercises(newExercises);
         
-        // Mark that user made changes
         setHasChangesInThisVisit(true);
         
         setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
@@ -535,10 +496,8 @@ export default function WorkoutPlayerPage() {
 
       if (error) throw error;
 
-      console.log('Workout progress saved:', { totalSets, totalReps, totalVolume });
     } catch (err) {
       console.error('Error saving workout progress:', err);
-      // Don't block navigation even if save fails
     }
   };
 
@@ -569,13 +528,6 @@ export default function WorkoutPlayerPage() {
       const totalReps = allSets.reduce((sum, set) => sum + set.reps, 0);
       const totalVolume = allSets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
 
-      console.log('Finishing workout:', {
-        durationMinutes,
-        totalSets,
-        totalReps,
-        totalVolume,
-      });
-
       // Update session WITH completed_at and duration_minutes
       const { error } = await supabase
         .from('workout_sessions')
@@ -590,7 +542,6 @@ export default function WorkoutPlayerPage() {
 
       if (error) throw error;
 
-      // Navigate to summary
       router.push(`/workout/${templateId}/summary`);
 
     } catch (err) {
@@ -601,14 +552,11 @@ export default function WorkoutPlayerPage() {
 
   // Handle back button (exit workout)
   const handleBackClick = () => {
-    // If no changes made in this visit, just navigate back
     if (!hasChangesInThisVisit) {
-      console.log('No changes made in this visit, navigating back without confirmation');
       router.push('/workout');
       return;
     }
 
-    // Has changes - show confirmation
     setConfirmDialog({
       show: true,
       title: 'Exit Workout',
@@ -616,10 +564,7 @@ export default function WorkoutPlayerPage() {
       variant: 'warning',
       onConfirm: async () => {
         setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
-        
-        // Save progress before exiting
         await saveWorkoutProgress();
-        
         router.push('/');
       },
     });
