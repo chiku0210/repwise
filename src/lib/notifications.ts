@@ -48,8 +48,8 @@ export function sendNotification(
 
   try {
     const notification = new Notification(title, {
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       requireInteraction: false, // Auto-dismiss after a few seconds
       ...options,
     });
