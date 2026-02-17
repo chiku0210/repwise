@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, SkipForward, CheckCircle, ChevronLeft } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
+import { requestNotificationPermission } from '@/lib/notifications';
 import { BottomNav } from '@/components/ui/bottom-nav';
 import { ProgressBar } from '@/components/workout/ProgressBar';
 import { ExerciseHeader } from '@/components/workout/ExerciseHeader';
@@ -83,6 +84,11 @@ export default function WorkoutPlayerPage() {
           router.push('/login');
           return;
         }
+
+        // Request notification permission (non-blocking)
+        requestNotificationPermission().catch(err => {
+          console.log('Notification permission denied or unavailable:', err);
+        });
 
         // Fetch template with exercises
         const { data: templateData, error: templateError } = await supabase
@@ -700,7 +706,7 @@ export default function WorkoutPlayerPage() {
               <button
                 onClick={handleNextExercise}
                 disabled={currentSets.length === 0}
-                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-600 transition-all active:scale-[0.98] disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed shadow-lg"
+                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-600 transition-all active:scale-[0.98] disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
               >
                 {isLastExercise ? (
                   <>
