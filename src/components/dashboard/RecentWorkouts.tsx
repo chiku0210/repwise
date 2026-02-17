@@ -44,12 +44,8 @@ export function RecentWorkouts() {
           .order('completed_at', { ascending: false })
           .limit(5);
 
-        if (error) {
-          console.error('Supabase error:', error);
-          throw error;
-        }
+        if (error) throw error;
         
-        console.log('Fetched workouts:', data);
         setWorkouts(
           (data || []).map((w: any) => ({
             ...w,
@@ -59,7 +55,7 @@ export function RecentWorkouts() {
           })) as WorkoutSession[],
         );
       } catch (error) {
-        console.error('Error fetching recent workouts:', error);
+        // Silent error - component shows empty state
       } finally {
         setIsLoading(false);
       }
