@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AuthGate } from '@/components/AuthGate';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { useWorkoutStats } from '@/hooks/useWorkoutStats';
+import { useProfileStats } from '@/hooks/useProfileStats';
 import { useRouter } from 'next/navigation';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { StatsCard } from '@/components/profile/StatsCard';
@@ -15,7 +15,7 @@ import { User, Dumbbell, Settings, LogOut, Edit } from 'lucide-react';
 export default function ProfilePage() {
   const { user, signOut, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useProfile(user?.id);
-  const { stats, loading: statsLoading } = useWorkoutStats(user?.id);
+  const { stats, loading: statsLoading } = useProfileStats(user?.id);
   const router = useRouter();
 
   const handleSignOut = async () => {

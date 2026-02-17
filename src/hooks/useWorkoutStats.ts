@@ -10,6 +10,10 @@ interface WeeklyStats {
   totalVolume: number;
 }
 
+/**
+ * Hook for fetching weekly workout statistics for dashboard
+ * Returns stats for last 7 days only
+ */
 export function useWorkoutStats() {
   const [stats, setStats] = useState<WeeklyStats>({
     totalWorkouts: 0,
@@ -44,7 +48,6 @@ export function useWorkoutStats() {
           .gte('completed_at', sevenDaysAgo.toISOString())
           .lte('completed_at', now.toISOString());
 
-        console.log('Fetched workouts for stats:', workouts);
         if (error) throw error;
 
         // Calculate totals
