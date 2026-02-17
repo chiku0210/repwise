@@ -700,7 +700,7 @@ export default function WorkoutPlayerPage() {
               <button
                 onClick={handleNextExercise}
                 disabled={currentSets.length === 0}
-                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-600 transition-all active:scale-[0.98] disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-600 transition-all active:scale-[0.98] disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed shadow-lg"
               >
                 {isLastExercise ? (
                   <>
