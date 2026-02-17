@@ -686,17 +686,17 @@ export default function WorkoutPlayerPage() {
           <div className="space-y-3 pt-2">
             {/* Navigation Buttons Row */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Previous Exercise */}
+              {/* Previous Exercise - Outline Blue */}
               <button
                 onClick={handlePreviousExercise}
                 disabled={isFirstExercise}
-                className="bg-gray-800 text-gray-300 font-medium py-3 rounded-lg hover:bg-gray-700 transition-all disabled:bg-gray-900 disabled:text-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="bg-blue-600/20 border-2 border-blue-600 text-blue-400 font-semibold py-3 rounded-lg hover:bg-blue-600/30 transition-all disabled:bg-gray-900 disabled:border-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <ChevronLeft className="w-5 h-5" />
                 Previous
               </button>
 
-              {/* Next Exercise / Finish Workout */}
+              {/* Next Exercise / Finish Workout - Solid Blue Gradient */}
               <button
                 onClick={handleNextExercise}
                 disabled={currentSets.length === 0}
@@ -716,11 +716,11 @@ export default function WorkoutPlayerPage() {
               </button>
             </div>
 
-            {/* Complete Later */}
+            {/* Complete Later - Subtle Outline Gray */}
             {!isLastExercise && (
               <button
                 onClick={handleCompleteLater}
-                className="w-full bg-gray-800 text-gray-300 font-medium py-3 rounded-lg hover:bg-gray-700 transition-all"
+                className="w-full bg-gray-800/30 border border-gray-700 text-gray-400 font-medium py-3 rounded-lg hover:bg-gray-800/50 hover:border-gray-600 hover:text-gray-300 transition-all"
               >
                 Complete Later (Move to End)
               </button>
