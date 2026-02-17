@@ -22,6 +22,7 @@ export default function DashboardPage() {
       ? Notification.permission 
       : 'denied'
   );
+  const [countdown, setCountdown] = useState<number>(0);
 
   const handleRequestPermission = async () => {
     setNotifStatus('Requesting permission...');
@@ -44,20 +45,38 @@ export default function DashboardPage() {
   };
 
   const handleSendTestNotification = () => {
-    setNotifStatus('Attempting to send notification...');
-    
-    try {
-      if (!canSendNotification()) {
-        setNotifStatus('❌ Cannot send: Permission not granted');
-        return;
-      }
-
-      sendRestCompleteNotification();
-      setNotifStatus('✅ Notification sent! Check your notifications.');
-    } catch (err: any) {
-      setNotifStatus(`❌ Send failed: ${err.message}`);
-      console.error('Send notification error:', err);
+    if (!canSendNotification()) {
+      setNotifStatus('❌ Cannot send: Permission not granted');
+      return;
     }
+
+    // Start countdown
+    setNotifStatus('⏱️ Notification will send in 5 seconds... MINIMIZE YOUR BROWSER NOW!');
+    setCountdown(5);
+
+    // Countdown timer
+    const countdownInterval = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Send notification after 5 seconds
+    setTimeout(() => {
+      try {
+        sendRestCompleteNotification();
+        setNotifStatus('✅ Notification sent! Check your screen (if minimized) or notification center.');
+        setCountdown(0);
+      } catch (err: any) {
+        setNotifStatus(`❌ Send failed: ${err.message}`);
+        console.error('Send notification error:', err);
+        setCountdown(0);
+      }
+    }, 5000);
   };
 
   const handleTestAll = async () => {
@@ -79,16 +98,32 @@ export default function DashboardPage() {
         return;
       }
       
-      // Step 3: Send test notification
-      setNotifStatus('Permission granted, sending test...');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      sendRestCompleteNotification();
-      setNotifStatus('✅ Full test complete! Check notifications.');
+      // Step 3: Countdown before sending
+      setNotifStatus('⏱️ Permission granted! Notification will send in 5 seconds... MINIMIZE NOW!');
+      setCountdown(5);
+
+      // Countdown timer
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Send after 5 seconds
+      setTimeout(() => {
+        sendRestCompleteNotification();
+        setNotifStatus('✅ Full test complete! Check your notifications.');
+        setCountdown(0);
+      }, 5000);
       
     } catch (err: any) {
       setNotifStatus(`❌ Test failed: ${err.message}`);
       console.error('Full test error:', err);
+      setCountdown(0);
     }
   };
 
@@ -128,6 +163,14 @@ export default function DashboardPage() {
                 </p>
               </div>
 
+              {/* Countdown Display */}
+              {countdown > 0 && (
+                <div className="bg-orange-900/30 border-2 border-orange-500 rounded-lg p-4 text-center animate-pulse">
+                  <div className="text-4xl font-bold text-orange-400 mb-2">{countdown}</div>
+                  <p className="text-sm text-orange-300 font-semibold">⚡ MINIMIZE YOUR BROWSER NOW! ⚡</p>
+                </div>
+              )}
+
               {/* Status Message */}
               {notifStatus && (
                 <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 text-sm text-gray-300">
@@ -139,37 +182,39 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 gap-2">
                 <button
                   onClick={handleTestAll}
-                  className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-500 hover:to-blue-600 transition-all"
+                  disabled={countdown > 0}
+                  className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-500 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  🚀 Run Full Test (Request + Send)
+                  🚀 Run Full Test (5s delay)
                 </button>
                 
                 <button
                   onClick={handleRequestPermission}
-                  className="bg-blue-600/20 border border-blue-600 text-blue-400 font-semibold py-2 px-4 rounded-lg hover:bg-blue-600/30 transition-all"
+                  disabled={countdown > 0}
+                  className="bg-blue-600/20 border border-blue-600 text-blue-400 font-semibold py-2 px-4 rounded-lg hover:bg-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   🔔 Request Permission Only
                 </button>
                 
                 <button
                   onClick={handleSendTestNotification}
-                  disabled={permissionState !== 'granted'}
+                  disabled={permissionState !== 'granted' || countdown > 0}
                   className="bg-green-600/20 border border-green-600 text-green-400 font-semibold py-2 px-4 rounded-lg hover:bg-green-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:border-gray-700 disabled:text-gray-500"
                 >
-                  ✅ Send Test Notification
+                  ✅ Send Test Notification (5s delay)
                 </button>
               </div>
 
               {/* Instructions */}
               <div className="text-xs text-gray-400 border-t border-yellow-700/30 pt-3">
-                <p className="font-semibold mb-1">Testing Instructions:</p>
+                <p className="font-semibold mb-1 text-orange-400">🎯 NEW: 5-Second Countdown!</p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Click "Run Full Test" to request permission and send test</li>
-                  <li>Grant permission when browser prompts you</li>
-                  <li>Check if notification appears</li>
-                  <li>On iOS: Must be installed as PWA for notifications to work</li>
-                  <li>On Android: Works in browser + PWA</li>
+                  <li>Click "✅ Send Test Notification"</li>
+                  <li>You have 5 seconds - MINIMIZE your browser</li>
+                  <li>Watch for notification on your screen</li>
+                  <li>If you see it pop up = notifications work! 🎉</li>
                 </ol>
+                <p className="mt-2 text-yellow-300">💡 Tip: On Mac use Cmd+M, on Windows use Windows+D</p>
               </div>
             </div>
 
