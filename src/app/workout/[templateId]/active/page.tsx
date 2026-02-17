@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, SkipForward, CheckCircle } from 'lucide-react';
+import { ArrowLeft, SkipForward, CheckCircle, ChevronLeft } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
 import { BottomNav } from '@/components/ui/bottom-nav';
 import { ProgressBar } from '@/components/workout/ProgressBar';
@@ -442,6 +442,13 @@ export default function WorkoutPlayerPage() {
     });
   };
 
+  // Handle previous exercise
+  const handlePreviousExercise = () => {
+    if (currentExerciseIndex > 0) {
+      setCurrentExerciseIndex(prev => prev - 1);
+    }
+  };
+
   // Handle next exercise
   const handleNextExercise = () => {
     if (currentExerciseIndex < exercises.length - 1) {
@@ -601,6 +608,7 @@ export default function WorkoutPlayerPage() {
   const currentSets = completedSets[currentExerciseIndex] || [];
   const lastSet = currentSets[currentSets.length - 1] || null;
   const isLastExercise = currentExerciseIndex === exercises.length - 1;
+  const isFirstExercise = currentExerciseIndex === 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -676,24 +684,37 @@ export default function WorkoutPlayerPage() {
 
           {/* Bottom Actions */}
           <div className="space-y-3 pt-2">
-            {/* Next Exercise / Finish Workout */}
-            <button
-              onClick={handleNextExercise}
-              disabled={currentSets.length === 0}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-600 transition-all active:scale-[0.98] disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
-            >
-              {isLastExercise ? (
-                <>
-                  <CheckCircle className="w-6 h-6" />
-                  Finish Workout
-                </>
-              ) : (
-                <>
-                  <SkipForward className="w-6 h-6" />
-                  Next Exercise
-                </>
-              )}
-            </button>
+            {/* Navigation Buttons Row */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Previous Exercise */}
+              <button
+                onClick={handlePreviousExercise}
+                disabled={isFirstExercise}
+                className="bg-gray-800 text-gray-300 font-medium py-3 rounded-lg hover:bg-gray-700 transition-all disabled:bg-gray-900 disabled:text-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <ChevronLeft className="w-5 h-5" />
+                Previous
+              </button>
+
+              {/* Next Exercise / Finish Workout */}
+              <button
+                onClick={handleNextExercise}
+                disabled={currentSets.length === 0}
+                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:from-blue-500 hover:to-blue-600 transition-all active:scale-[0.98] disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+              >
+                {isLastExercise ? (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Finish
+                  </>
+                ) : (
+                  <>
+                    Next
+                    <SkipForward className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </div>
 
             {/* Complete Later */}
             {!isLastExercise && (
