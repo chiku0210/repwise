@@ -50,7 +50,14 @@ export function RecentWorkouts() {
         }
         
         console.log('Fetched workouts:', data);
-        setWorkouts(data || []);
+        setWorkouts(
+          (data || []).map((w: any) => ({
+            ...w,
+            templates: Array.isArray(w.templates)
+              ? (w.templates[0] ?? null)
+              : (w.templates ?? null),
+          })) as WorkoutSession[],
+        );
       } catch (error) {
         console.error('Error fetching recent workouts:', error);
       } finally {
@@ -83,9 +90,7 @@ export function RecentWorkouts() {
             <Dumbbell className="h-8 w-8 text-blue-400" strokeWidth={2} />
           </div>
           <p className="mb-1 font-semibold text-white">No workouts yet</p>
-          <p className="text-sm text-gray-400">
-            Start your first workout to see it here!
-          </p>
+          <p className="text-sm text-gray-400">Start your first workout to see it here!</p>
         </div>
       </div>
     );
@@ -107,7 +112,7 @@ export function RecentWorkouts() {
         {workouts.map((workout) => {
           // Priority: template name > workout_name field
           const displayName = workout.templates?.name || workout.workout_name || 'Workout';
-          
+
           return (
             <button
               key={workout.id}
