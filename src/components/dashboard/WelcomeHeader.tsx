@@ -34,9 +34,25 @@ export function WelcomeHeader() {
     fetchProfile();
   }, [user?.id]);
 
-  // Priority: profile.name > email username > 'there'
+  // Extract first name + middle name (exclude last name)
+  const getFirstName = (fullName: string): string => {
+    const parts = fullName.trim().split(/\s+/);
+    
+    if (parts.length === 1) {
+      // Only one name
+      return parts[0];
+    } else if (parts.length === 2) {
+      // Two names - assume first name only
+      return parts[0];
+    } else {
+      // Three or more names - return first + middle (exclude last)
+      return parts.slice(0, -1).join(' ');
+    }
+  };
+
+  // Priority: profile.name (first + middle only) > email username > 'there'
   const getName = () => {
-    if (profile?.name) return profile.name;
+    if (profile?.name) return getFirstName(profile.name);
     if (!user?.email) return 'there';
     const username = user.email.split('@')[0];
     return username.charAt(0).toUpperCase() + username.slice(1);

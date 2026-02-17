@@ -9,7 +9,7 @@ import { Clock, ChevronRight, Dumbbell } from 'lucide-react';
 interface WorkoutSession {
   id: string;
   started_at: string;
-  finished_at: string | null;
+  completed_at: string | null;
   duration_minutes: number | null;
   workout_name: string;
   template_id: string | null;
@@ -33,15 +33,15 @@ export function RecentWorkouts() {
             id,
             workout_name,
             started_at,
-            finished_at,
+            completed_at,
             duration_minutes,
             template_id,
             templates:template_id (
               name
             )
           `)
-          .not('finished_at', 'is', null) // Only completed workouts
-          .order('finished_at', { ascending: false })
+          .not('completed_at', 'is', null) // Only completed workouts
+          .order('completed_at', { ascending: false })
           .limit(5);
 
         if (error) {
@@ -123,8 +123,8 @@ export function RecentWorkouts() {
                   </span>
                   <span>•</span>
                   <span>
-                    {workout.finished_at
-                      ? formatDistanceToNow(new Date(workout.finished_at), { addSuffix: true })
+                    {workout.completed_at
+                      ? formatDistanceToNow(new Date(workout.completed_at), { addSuffix: true })
                       : formatDistanceToNow(new Date(workout.started_at), { addSuffix: true })}
                   </span>
                 </div>
