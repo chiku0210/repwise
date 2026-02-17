@@ -56,6 +56,9 @@ export default function WorkoutPlayerPage() {
   const [workoutSessionId, setWorkoutSessionId] = useState<string | null>(null);
   const [workoutExerciseIds, setWorkoutExerciseIds] = useState<Record<string, string>>({});
   
+  // Track if user made any changes in this visit
+  const [hasChangesInThisVisit, setHasChangesInThisVisit] = useState(false);
+  
   // Rest timer state
   const [showRestTimer, setShowRestTimer] = useState(false);
   
@@ -268,6 +271,7 @@ export default function WorkoutPlayerPage() {
       setWorkoutExerciseIds(idMap);
       setCompletedSets(completedSetsMap);
       setCurrentExerciseIndex(currentIndex);
+      // Don't set hasChangesInThisVisit - restored state doesn't count as changes
 
       console.log('Session restored successfully!');
       console.log('- Sets by exercise:', Object.keys(completedSetsMap).map(k => `Ex${k}: ${completedSetsMap[parseInt(k)].length}`));
@@ -405,6 +409,9 @@ export default function WorkoutPlayerPage() {
         [currentExerciseIndex]: newSets,
       }));
 
+      // Mark that user made changes in this visit
+      setHasChangesInThisVisit(true);
+
       // Show rest timer if:
       // 1. Not the last set of target sets AND
       // 2. Not the last exercise OR not all sets completed
@@ -458,6 +465,9 @@ export default function WorkoutPlayerPage() {
             [currentExerciseIndex]: updatedSets,
           }));
 
+          // Mark that user made changes
+          setHasChangesInThisVisit(true);
+
         } catch (err) {
           console.error('Error deleting set:', err);
           setError('Failed to delete set.');
@@ -491,6 +501,10 @@ export default function WorkoutPlayerPage() {
         const [removed] = newExercises.splice(currentExerciseIndex, 1);
         newExercises.push(removed);
         setExercises(newExercises);
+        
+        // Mark that user made changes
+        setHasChangesInThisVisit(true);
+        
         setConfirmDialog({ show: false, title: '', message: '', onConfirm: () => {} });
       },
     });
@@ -565,14 +579,14 @@ export default function WorkoutPlayerPage() {
 
   // Handle back button (exit workout)
   const handleBackClick = () => {
-    // If no session created yet (no sets logged), just navigate back
-    if (!workoutSessionId) {
-      console.log('No sets logged, navigating back without confirmation');
-      router.push('/workout'); // Navigate to workout template list
+    // If no changes made in this visit, just navigate back
+    if (!hasChangesInThisVisit) {
+      console.log('No changes made in this visit, navigating back without confirmation');
+      router.push('/workout');
       return;
     }
 
-    // Has sets - show confirmation
+    // Has changes - show confirmation
     setConfirmDialog({
       show: true,
       title: 'Exit Workout',
@@ -584,7 +598,7 @@ export default function WorkoutPlayerPage() {
         // Save progress before exiting
         await saveWorkoutProgress();
         
-        router.push('/'); // Navigate to home
+        router.push('/');
       },
     });
   };
