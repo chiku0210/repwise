@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SkipForward } from 'lucide-react';
 
 interface RestTimerProps {
@@ -12,6 +12,46 @@ interface RestTimerProps {
 
 export function RestTimer({ isOpen, restSeconds, onComplete, onSkip }: RestTimerProps) {
   const [timeLeft, setTimeLeft] = useState(restSeconds);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  // Wake Lock API: Keep screen awake during rest timer
+  useEffect(() => {
+    async function requestWakeLock() {
+      if (!isOpen || typeof window === 'undefined') return;
+
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock activated - screen will stay on');
+        }
+      } catch (err) {
+        console.error('Wake Lock failed:', err);
+      }
+    }
+
+    async function releaseWakeLock() {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+          console.log('Wake Lock released');
+        } catch (err) {
+          console.error('Wake Lock release failed:', err);
+        }
+      }
+    }
+
+    if (isOpen) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      releaseWakeLock();
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
