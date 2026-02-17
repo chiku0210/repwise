@@ -22,7 +22,7 @@ export function Footer({ variant = 'landing' }: FooterProps) {
         isApp ? 'max-w-md' : 'max-w-6xl'
       }`}>
         <p className={isApp ? 'text-xs text-gray-400' : 'text-sm text-gray-400'}>
-          © 2025 Repwise{!isApp && '. Every rep counts.'}
+          © {new Date().getFullYear()} Repwise{!isApp && '. Every rep counts.'}
         </p>
         <div className={`flex justify-center ${
           isApp ? 'mt-1 gap-3 text-xs' : 'mt-2 gap-4 text-xs'
