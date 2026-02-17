@@ -1,6 +1,7 @@
 'use client';
 
 import { BottomNav } from '@/components/ui/bottom-nav';
+import { AppFooter } from '@/components/ui/AppFooter';
 import { AuthGate } from '@/components/AuthGate';
 import { WelcomeHeader } from '@/components/dashboard/WelcomeHeader';
 import { WeeklyStats } from '@/components/dashboard/WeeklyStats';
@@ -20,24 +21,7 @@ export default function DashboardPage() {
           </div>
         </main>
 
-        {/* Footer with Privacy Policy link - positioned above BottomNav */}
-        <footer className="border-t border-gray-800 bg-[#0f1e33] px-4 py-3 pb-24">
-          <div className="mx-auto max-w-md text-center">
-            <p className="text-xs text-gray-400">
-              © 2025 Repwise
-            </p>
-            <div className="mt-1 flex justify-center gap-3 text-xs text-gray-500">
-              <a href="/privacy" className="transition-colors hover:text-blue-400">
-                Privacy Policy
-              </a>
-              <span>•</span>
-              <a href="mailto:chiku0210@gmail.com" className="transition-colors hover:text-blue-400">
-                Contact
-              </a>
-            </div>
-          </div>
-        </footer>
-
+        <AppFooter />
         <BottomNav />
       </div>
     </AuthGate>
