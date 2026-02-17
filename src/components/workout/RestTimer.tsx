@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { SkipForward } from 'lucide-react';
+import { sendRestCompleteNotification } from '@/lib/notifications';
 
 interface RestTimerProps {
   isOpen: boolean;
@@ -64,6 +65,10 @@ export function RestTimer({ isOpen, restSeconds, onComplete, onSkip }: RestTimer
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate(200);
       }
+      
+      // Send browser notification
+      sendRestCompleteNotification();
+      
       onComplete();
       return;
     }
