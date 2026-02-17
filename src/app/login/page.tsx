@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabase';
+import { Dumbbell } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -114,12 +116,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a1628] px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0a1628] px-4 py-8">
       <div className="w-full max-w-md">
+        {/* Back to Home Link */}
+        <Link
+          href="/"
+          className="mb-6 inline-flex items-center text-sm text-gray-400 transition-colors hover:text-blue-400"
+        >
+          ← Back to home
+        </Link>
+
         {/* Logo/Title */}
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-white">Repwise</h1>
-          <p className="text-gray-400">
+          {/* Dumbbell Icon */}
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-4 shadow-lg shadow-blue-500/20">
+              <Dumbbell className="h-12 w-12 text-white" strokeWidth={2} />
+            </div>
+          </div>
+
+          <h1 className="mb-2 text-3xl font-bold text-white">Repwise</h1>
+          <p className="text-sm text-gray-400">
             Every rep counts!
             <br />
             Log your training and build strength with intent.
@@ -127,7 +144,7 @@ export default function LoginPage() {
         </div>
 
         {/* Auth Form */}
-        <div className="rounded-lg bg-[#0f1e33] p-6 shadow-xl">
+        <div className="rounded-xl border border-gray-800 bg-[#0f1e33] p-6 shadow-xl">
           {step === 'email' ? (
             <>
               <h2 className="mb-6 text-xl font-semibold text-white">Sign In</h2>
@@ -137,7 +154,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="mb-4 flex w-full items-center justify-center gap-3 rounded-md border border-gray-600 bg-white px-4 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mb-4 flex w-full items-center justify-center gap-3 rounded-lg border border-gray-600 bg-white px-4 py-3 font-semibold text-gray-900 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path
@@ -163,10 +180,10 @@ export default function LoginPage() {
               {/* Divider */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-600"></div>
+                  <div className="w-full border-t border-gray-700"></div>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-[#0f1e33] px-2 text-gray-400">Or continue with email</span>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-[#0f1e33] px-3 text-gray-500">Or continue with email</span>
                 </div>
               </div>
 
@@ -184,18 +201,18 @@ export default function LoginPage() {
                     placeholder="you@example.com"
                     required
                     disabled={loading}
-                    className="w-full rounded-md border border-gray-600 bg-[#0a1628] px-4 py-3 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                    className="w-full rounded-lg border border-gray-700 bg-[#0a1628] px-4 py-3 text-white placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
                   />
                 </div>
 
                 {error && (
-                  <div className="mb-4 rounded-md border border-red-800 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+                  <div className="mb-4 rounded-lg border border-red-800/50 bg-red-900/20 px-4 py-3 text-sm text-red-300">
                     {error}
                   </div>
                 )}
 
                 {message && (
-                  <div className="mb-4 rounded-md border border-blue-800 bg-blue-900/30 px-4 py-3 text-sm text-blue-300">
+                  <div className="mb-4 rounded-lg border border-blue-800/50 bg-blue-900/20 px-4 py-3 text-sm text-blue-300">
                     {message}
                   </div>
                 )}
@@ -203,7 +220,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? 'Sending...' : 'Send OTP'}
                 </button>
@@ -213,7 +230,7 @@ export default function LoginPage() {
             <form onSubmit={handleVerifyOtp}>
               <h2 className="mb-2 text-xl font-semibold text-white">Verify OTP</h2>
               <p className="mb-6 text-sm text-gray-400">
-                Enter the code sent to <strong>{email}</strong>
+                Enter the code sent to <strong className="text-gray-300">{email}</strong>
               </p>
 
               <div className="mb-4">
@@ -229,18 +246,18 @@ export default function LoginPage() {
                   required
                   disabled={loading}
                   maxLength={6}
-                  className="w-full rounded-md border border-gray-600 bg-[#0a1628] px-4 py-3 text-center text-2xl tracking-widest text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-full rounded-lg border border-gray-700 bg-[#0a1628] px-4 py-3 text-center text-2xl tracking-widest text-white placeholder-gray-500 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
                 />
               </div>
 
               {error && (
-                <div className="mb-4 rounded-md border border-red-800 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+                <div className="mb-4 rounded-lg border border-red-800/50 bg-red-900/20 px-4 py-3 text-sm text-red-300">
                   {error}
                 </div>
               )}
 
               {message && (
-                <div className="mb-4 rounded-md border border-blue-800 bg-blue-900/30 px-4 py-3 text-sm text-blue-300">
+                <div className="mb-4 rounded-lg border border-blue-800/50 bg-blue-900/20 px-4 py-3 text-sm text-blue-300">
                   {message}
                 </div>
               )}
@@ -248,7 +265,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mb-3 w-full rounded-md bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mb-3 w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0f1e33] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Verifying...' : 'Verify & Sign In'}
               </button>
@@ -263,15 +280,15 @@ export default function LoginPage() {
                     setMessage(null);
                   }}
                   disabled={loading}
-                  className="text-gray-400 hover:text-white disabled:opacity-50"
+                  className="text-gray-400 transition-colors hover:text-white disabled:opacity-50"
                 >
-                  Change email
+                  ← Change email
                 </button>
                 <button
                   type="button"
                   onClick={handleResendOtp}
                   disabled={loading}
-                  className="text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                  className="text-blue-400 transition-colors hover:text-blue-300 disabled:opacity-50"
                 >
                   Resend OTP
                 </button>
