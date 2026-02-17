@@ -1,7 +1,7 @@
 'use client';
 
 import { BottomNav } from '@/components/ui/bottom-nav';
-import { AppFooter } from '@/components/ui/AppFooter';
+import { Footer } from '@/components/landing/Footer';
 import { AuthGate } from '@/components/AuthGate';
 import { WelcomeHeader } from '@/components/dashboard/WelcomeHeader';
 import { WeeklyStats } from '@/components/dashboard/WeeklyStats';
@@ -21,7 +21,7 @@ export default function DashboardPage() {
           </div>
         </main>
 
-        <AppFooter />
+        <Footer variant="app" />
         <BottomNav />
       </div>
     </AuthGate>
