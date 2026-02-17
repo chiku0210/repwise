@@ -20,18 +20,18 @@ const features = [
 
 export function ValueProps() {
   return (
-    <section className="px-6 py-16">
-      <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+    <section className="px-6 py-12 md:py-16">
+      <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3 md:gap-6">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
             <div
               key={feature.title}
-              className="rounded-xl border border-gray-800 bg-[#0f1e33] p-6 transition-colors hover:border-blue-600/50"
+              className="rounded-xl border border-gray-800 bg-[#0f1e33] p-6 transition-all duration-300 hover:border-blue-600/50 hover:shadow-lg hover:shadow-blue-600/10"
             >
               {/* Icon */}
-              <div className="mb-4 inline-flex rounded-lg bg-blue-500/10 p-2">
-                <Icon className="h-12 w-12 text-blue-500" strokeWidth={2} />
+              <div className="mb-4 inline-flex rounded-lg bg-blue-500/20 p-3 ring-1 ring-blue-500/30">
+                <Icon className="h-10 w-10 text-blue-400 md:h-12 md:w-12" strokeWidth={2} />
               </div>
 
               {/* Title */}
