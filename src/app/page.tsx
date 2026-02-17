@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { LandingHeader } from '@/components/landing/Header';
 import { Hero } from '@/components/landing/Hero';
 import { ValueProps } from '@/components/landing/ValueProps';
-import { LandingFooter } from '@/components/landing/Footer';
+import { Footer } from '@/components/landing/Footer';
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -31,7 +31,7 @@ export default function LandingPage() {
         <Hero />
         <ValueProps />
       </main>
-      <LandingFooter />
+      <Footer />
     </div>
   );
 }

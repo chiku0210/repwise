@@ -549,17 +549,39 @@ export default function WorkoutPlayerPage() {
     try {
       const supabase = getSupabaseBrowserClient();
 
+      // Fetch session to get started_at timestamp
+      const { data: sessionData, error: fetchError } = await supabase
+        .from('workout_sessions')
+        .select('started_at')
+        .eq('id', workoutSessionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Calculate duration
+      const startedAt = new Date(sessionData.started_at);
+      const completedAt = new Date();
+      const durationMinutes = Math.round((completedAt.getTime() - startedAt.getTime()) / 60000);
+
       // Calculate totals
       const allSets = Object.values(completedSets).flat();
       const totalSets = allSets.length;
       const totalReps = allSets.reduce((sum, set) => sum + set.reps, 0);
       const totalVolume = allSets.reduce((sum, set) => sum + set.weight_kg * set.reps, 0);
 
-      // Update session WITH completed_at (workout finished)
+      console.log('Finishing workout:', {
+        durationMinutes,
+        totalSets,
+        totalReps,
+        totalVolume,
+      });
+
+      // Update session WITH completed_at and duration_minutes
       const { error } = await supabase
         .from('workout_sessions')
         .update({
-          completed_at: new Date().toISOString(),
+          completed_at: completedAt.toISOString(),
+          duration_minutes: durationMinutes,
           total_sets: totalSets,
           total_reps: totalReps,
           total_volume_kg: totalVolume,
