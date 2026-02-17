@@ -7,7 +7,7 @@ export function LandingHeader() {
         <h1 className="text-xl font-semibold text-white">Repwise</h1>
         <Link
           href="/login"
-          className="text-sm font-medium text-gray-400 transition-colors hover:text-blue-400"
+          className="rounded-lg border border-blue-600/50 bg-blue-600/10 px-4 py-2 text-sm font-medium text-blue-400 transition-all hover:border-blue-600 hover:bg-blue-600/20 hover:text-blue-300"
         >
           Sign In
         </Link>
